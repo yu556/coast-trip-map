@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+  <title>海边之旅 · 地图行程</title>
+  <!-- 高德 JS API 2.0：须先设置安全密钥，再加载 maps 脚本 -->
+  <script>
+    window._AMapSecurityConfig = {
+      securityJsCode: "e18b129c2972976d1fe758d4003a0fec",
+    };
+  </script>
+  <script src="https://webapi.amap.com/maps?v=2.0&key=51b25f3f71ee69fdee427c9e8926fc5e"></script>
+  <style>
+    :root {
+      --ink: #12263a;
+      --ink-soft: #3d566e;
+      --sea: #1a6b7a;
+      --sea-deep: #0f4c59;
+      --foam: #e8f2f4;
+      --sand: #f3eee6;
+      --coral: #c45c3e;
+      --line: rgba(18, 38, 58, 0.12);
+      --panel: rgba(255, 252, 248, 0.96);
+      --day1: #1a6b7a;
+      --day2: #2a8f7b;
+      --day3: #3d7ea6;
+      --day4: #5a6fa8;
+      --day5: #c45c3e;
+      --radius: 18px;
+      --shadow: 0 12px 40px rgba(18, 38, 58, 0.14);
+      --font-display: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", serif;
+      --font-body: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      font-family: var(--font-body);
+      color: var(--ink);
+      background: var(--sand);
+      overflow: hidden;
+      position: fixed;
+      inset: 0;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: minmax(320px, 400px) 1fr;
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+    }
+
+    /* —— Left rail —— */
+    .rail {
+      display: flex;
+      flex-direction: column;
+      background: var(--panel);
+      backdrop-filter: blur(12px);
+      border-right: 1px solid var(--line);
+      z-index: 500;
+      min-height: 0;
+    }
+
+    .brand {
+      padding: 22px 22px 14px;
+      background: #f0f6f7;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand-kicker {
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--sea);
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .brand h1 {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.15;
+      color: var(--ink);
+    }
+
+    .brand p {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--ink-soft);
+      line-height: 1.5;
+    }
+
+    .brand-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 11px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      background: rgba(26, 107, 122, 0.1);
+      color: var(--sea-deep);
+      border: 1px solid rgba(26, 107, 122, 0.18);
+    }
+
+    .days {
+      display: flex;
+      gap: 8px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      border-bottom: 1px solid var(--line);
+      scrollbar-width: none;
+    }
+    .days::-webkit-scrollbar { display: none; }
+
+    .day-btn {
+      flex: 0 0 auto;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink-soft);
+      border-radius: 14px;
+      padding: 10px 12px;
+      cursor: pointer;
+      text-align: left;
+      min-width: 72px;
+      transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.15s;
+    }
+    .day-btn:hover { transform: translateY(-1px); border-color: rgba(26, 107, 122, 0.35); }
+    .day-btn.active {
+      background: var(--sea-deep);
+      color: #fff;
+      border-color: var(--sea-deep);
+    }
+    .day-btn .d-label { display: block; font-size: 11px; opacity: 0.75; }
+    .day-btn .d-title { display: block; font-size: 13px; font-weight: 600; margin-top: 2px; }
+
+    .list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 14px 24px;
+      scroll-behavior: smooth;
+    }
+
+    .list-section {
+      margin-bottom: 18px;
+    }
+
+    .list-section h2 {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin: 8px 6px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .stop {
+      width: 100%;
+      text-align: left;
+      border: 1px solid transparent;
+      background: #fff;
+      border-radius: 16px;
+      padding: 14px 14px 14px 16px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+    .stop::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--accent, var(--sea));
+    }
+    .stop:hover { border-color: rgba(26, 107, 122, 0.25); }
+    .stop.selected {
+      border-color: rgba(26, 107, 122, 0.45);
+      background: var(--foam);
+    }
+
+    .stop-time {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent, var(--sea));
+      letter-spacing: 0.04em;
+    }
+    .stop-name {
+      font-size: 15px;
+      font-weight: 600;
+      margin-top: 4px;
+      line-height: 1.35;
+    }
+    .stop-desc {
+      font-size: 12px;
+      color: var(--ink-soft);
+      margin-top: 4px;
+      line-height: 1.45;
+    }
+    .stop-type {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(18, 38, 58, 0.06);
+      color: var(--ink-soft);
+    }
+
+    /* —— Map —— */
+    .map-wrap {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      height: 100%;
+      background: #d5e4e8;
+    }
+
+    #map {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background: #d5e4e8;
+    }
+
+    .map-status {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+      background: #d5e4e8;
+      color: var(--ink-soft);
+      font-size: 14px;
+      line-height: 1.6;
+      pointer-events: none;
+    }
+    .map-status.hide { display: none; }
+    .map-status.error {
+      pointer-events: auto;
+      background: #f3eee6;
+      color: var(--ink);
+    }
+    .map-status strong { display: block; margin-bottom: 8px; color: var(--ink); font-size: 16px; }
+
+    .map-hud {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 450;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .hud-card {
+      background: rgba(255, 252, 248, 0.94);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px 12px;
+      box-shadow: var(--shadow);
+      font-size: 12px;
+      color: var(--ink-soft);
+      max-width: 220px;
+    }
+    .hud-card strong {
+      display: block;
+      color: var(--ink);
+      font-size: 13px;
+      margin-bottom: 2px;
+    }
+
+    .fit-btn {
+      border: none;
+      background: var(--sea-deep);
+      color: #fff;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+    }
+    .fit-btn:hover { background: var(--sea); }
+
+    /* Detail sheet */
+    .sheet {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      bottom: 16px;
+      z-index: 460;
+      background: rgba(255, 252, 248, 0.96);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 18px 16px;
+      transform: translateY(120%);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s;
+      max-width: 480px;
+    }
+    .sheet.open {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .sheet-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .sheet-day {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--accent, var(--sea));
+    }
+    .sheet h3 {
+      font-family: var(--font-display);
+      font-size: 22px;
+      margin-top: 4px;
+      line-height: 1.2;
+    }
+    .sheet-close {
+      border: none;
+      background: rgba(18, 38, 58, 0.06);
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      color: var(--ink-soft);
+      flex-shrink: 0;
+    }
+    .sheet-body {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--ink-soft);
+      line-height: 1.55;
+    }
+    .sheet-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      appearance: none;
+      border: none;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 11px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .btn-primary {
+      background: var(--coral);
+      color: #fff;
+      flex: 1;
+      min-width: 140px;
+    }
+    .btn-primary:hover { filter: brightness(1.05); }
+    .btn-ghost {
+      background: rgba(18, 38, 58, 0.06);
+      color: var(--ink);
+    }
+
+    /* Map marker pin */
+    .pin {
+      width: 34px;
+      height: 34px;
+      border-radius: 50% 50% 50% 4px;
+      transform: rotate(-45deg);
+      border: 2px solid #fff;
+      box-shadow: 0 4px 12px rgba(18, 38, 58, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.15s;
+    }
+    .pin span {
+      transform: rotate(45deg);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--font-body);
+    }
+    .pin.selected {
+      transform: rotate(-45deg) scale(1.18);
+      box-shadow: 0 6px 18px rgba(18, 38, 58, 0.45);
+    }
+    .pin.lodging { border-radius: 8px; transform: none; }
+    .pin.lodging span { transform: none; }
+    .pin.lodging.selected { transform: scale(1.12); }
+
+    .amap-logo, .amap-copyright { opacity: 0.7 !important; }
+    .amap-marker-label { border: none !important; background: transparent !important; }
+
+    .mobile-bar,
+    .drawer-grab,
+    .desktop-only-spacer { display: none; }
+
+    /* —— Mobile：地图优先 + 底部日程抽屉 —— */
+    @media (max-width: 860px) {
+      .app {
+        display: block;
+        position: relative;
+        width: 100%;
+        height: 100%;
+        height: 100dvh;
+      }
+
+      .mobile-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 520;
+        padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 10px;
+        background: rgba(255, 252, 248, 0.94);
+        border-bottom: 1px solid var(--line);
+      }
+      .mobile-bar-text { min-width: 0; }
+      .mobile-bar-kicker {
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        color: var(--sea);
+        font-weight: 600;
+      }
+      .mobile-bar-title {
+        font-family: var(--font-display);
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .mobile-bar-meta {
+        font-size: 11px;
+        color: var(--ink-soft);
+        margin-top: 2px;
+      }
+      .mobile-fit {
+        border: none;
+        background: #fff;
+        color: var(--sea-deep);
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      .map-wrap {
+        position: absolute;
+        inset: 0;
+        order: unset;
+        height: 100%;
+        min-height: 0;
+      }
+
+      .map-hud {
+        top: calc(58px + env(safe-area-inset-top, 0px));
+        right: 12px;
+      }
+      .fit-btn { display: none; }
+      .hud-card { display: none; }
+
+      .rail {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        order: unset;
+        z-index: 540;
+        display: flex;
+        flex-direction: column;
+        border-right: none;
+        border-top: none;
+        border-radius: 22px 22px 0 0;
+        background: rgba(255, 252, 248, 0.98);
+        box-shadow: 0 -8px 32px rgba(18, 38, 58, 0.14);
+        height: var(--drawer-h, 38dvh);
+        max-height: calc(92dvh - env(safe-area-inset-top, 0px));
+        transition: height 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        overflow: hidden;
+        min-height: 0;
+      }
+      .rail[data-snap="peek"] { --drawer-h: calc(168px + env(safe-area-inset-bottom, 0px)); }
+      .rail[data-snap="half"] { --drawer-h: 46dvh; }
+      .rail[data-snap="full"] { --drawer-h: calc(88dvh - env(safe-area-inset-top, 0px)); }
+
+      .drawer-grab {
+        display: block;
+        flex-shrink: 0;
+        padding: 8px 16px 6px;
+        touch-action: none;
+        cursor: grab;
+        user-select: none;
+      }
+      .grab-bar {
+        width: 40px;
+        height: 4px;
+        border-radius: 999px;
+        background: rgba(18, 38, 58, 0.18);
+        margin: 0 auto 10px;
+      }
+      .peek-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .peek-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--ink);
+      }
+      .peek-sub {
+        font-size: 12px;
+        color: var(--ink-soft);
+        margin-top: 2px;
+      }
+      .peek-toggle {
+        border: none;
+        background: rgba(26, 107, 122, 0.1);
+        color: var(--sea-deep);
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 8px 12px;
+        border-radius: 999px;
+        flex-shrink: 0;
+      }
+
+      .brand {
+        display: none;
+      }
+
+      .days {
+        padding: 4px 12px 10px;
+        border-bottom: 1px solid var(--line);
+        gap: 6px;
+      }
+      .day-btn {
+        min-width: 56px;
+        padding: 8px 10px;
+        border-radius: 12px;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .day-btn .d-label { font-size: 10px; }
+      .day-btn .d-title { font-size: 12px; }
+
+      .list {
+        padding: 10px 12px calc(18px + env(safe-area-inset-bottom, 0px));
+        -webkit-overflow-scrolling: touch;
+      }
+      .stop {
+        padding: 12px 12px 12px 14px;
+        border-radius: 14px;
+        margin-bottom: 6px;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .stop-name { font-size: 14px; }
+      .stop-desc {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .list-section h2 { margin: 4px 4px 8px; font-size: 11px; }
+
+      /* 详情贴在抽屉上方，拇指可点导航 */
+      .sheet {
+        left: 10px;
+        right: 10px;
+        bottom: calc(var(--drawer-h, 38dvh) + 8px);
+        max-width: none;
+        padding: 14px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+        border-radius: 18px;
+        z-index: 560;
+      }
+      .sheet h3 { font-size: 18px; }
+      .sheet-actions { flex-wrap: nowrap; }
+      .btn {
+        min-height: 44px;
+        font-size: 14px;
+        padding: 12px 14px;
+      }
+      .btn-primary { flex: 1.4; }
+      .btn-ghost { flex: 0.8; min-width: 0; padding: 12px 10px; }
+
+      .rail[data-snap="peek"] .list { visibility: hidden; pointer-events: none; }
+      .rail[data-snap="peek"] .list-section { display: none; }
+      .rail.sheet-open[data-snap="peek"] {
+        --drawer-h: calc(120px + env(safe-area-inset-bottom, 0px));
+      }
+    }
+
+    @media (min-width: 861px) {
+      .mobile-bar { display: none !important; }
+      .drawer-grab { display: none !important; }
+    }
+
+    @keyframes pulse-ring {
+      0% { box-shadow: 0 0 0 0 rgba(26, 107, 122, 0.45); }
+      70% { box-shadow: 0 0 0 12px rgba(26, 107, 122, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(26, 107, 122, 0); }
+    }
+    .stop.selected { animation: pulse-ring 1.2s ease-out 1; }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="mobile-bar" id="mobileBar">
+      <div class="mobile-bar-text">
+        <div class="mobile-bar-kicker">COAST TRIP</div>
+        <div class="mobile-bar-title">我们的海边之旅</div>
+        <div class="mobile-bar-meta">9.15–9.19 · 自驾 · 点地图可导航</div>
+      </div>
+      <button type="button" class="mobile-fit" id="mobileFitBtn">全览</button>
+    </header>
+
+    <main class="map-wrap">
+      <div id="map" role="application" aria-label="行程地图"></div>
+      <div class="map-status" id="mapStatus"><strong>地图加载中…</strong>请保持网络畅通</div>
+      <div class="map-hud">
+        <button type="button" class="fit-btn" id="fitBtn">适配当前行程</button>
+        <div class="hud-card" id="hudHint">
+          <strong>怎么用</strong>
+          打开后会自动用高德校准景点坐标；点日程或图钉查看详情并导航。
+        </div>
+      </div>
+      <div class="sheet" id="sheet" aria-live="polite">
+        <div class="sheet-top">
+          <div>
+            <div class="sheet-day" id="sheetDay"></div>
+            <h3 id="sheetTitle"></h3>
+          </div>
+          <button type="button" class="sheet-close" id="sheetClose" aria-label="关闭">×</button>
+        </div>
+        <div class="sheet-body" id="sheetBody"></div>
+        <div class="sheet-actions">
+          <a class="btn btn-primary" id="navBtn" href="#" target="_blank" rel="noopener">高德导航</a>
+          <button type="button" class="btn btn-ghost" id="focusBtn">看地图</button>
+        </div>
+      </div>
+    </main>
+
+    <aside class="rail" id="rail" data-snap="half">
+      <div class="drawer-grab" id="drawerGrab" aria-label="拖动调整日程面板">
+        <div class="grab-bar"></div>
+        <div class="peek-row">
+          <div>
+            <div class="peek-title" id="peekTitle">行程日程</div>
+            <div class="peek-sub" id="peekSub">上滑展开 · 下滑收起</div>
+          </div>
+          <button type="button" class="peek-toggle" id="peekToggle">展开</button>
+        </div>
+      </div>
+
+      <header class="brand">
+        <div class="brand-kicker">Coast road trip</div>
+        <h1>我们的海边之旅</h1>
+        <p>海鲜 · 啤酒 · 慢生活 · 胖东来<br />不爬山 · 不赶路 · 睡到自然醒</p>
+        <div class="brand-meta">
+          <span class="chip">9.15 — 9.19</span>
+          <span class="chip">自驾 · 5 天</span>
+          <span class="chip">高德官方地图</span>
+        </div>
+      </header>
+
+      <div class="days" id="dayFilters" role="tablist" aria-label="按天筛选"></div>
+      <div class="list" id="stopList"></div>
+    </aside>
+  </div>
+
+  <script>
+    /**
+     * 产品数据模型：每一天一组站点。
+     * lng/lat 对齐高德坐标（GCJ-02）；导航同时带 keyword，定位更稳。
+     */
+    const DAYS = [
+      {
+        id: "all",
+        short: "全部",
+        title: "全览",
+        date: "9.15–9.19",
+        color: "#12263a",
+      },
+      {
+        id: "d1",
+        short: "D1",
+        title: "赴威海",
+        date: "9.15 周二",
+        color: "#1a6b7a",
+        summary: "北京 → 威海 · 约 800km / 8.5h · 住北站附近",
+      },
+      {
+        id: "d2",
+        short: "D2",
+        title: "威海精华",
+        date: "9.16 周三",
+        color: "#2a8f7b",
+        summary: "猫头山 + 日落湾 + 韩乐坊 · 住韩乐坊附近",
+      },
+      {
+        id: "d3",
+        short: "D3",
+        title: "赴青岛",
+        date: "9.17 周四",
+        color: "#3d7ea6",
+        summary: "古陌早市 → 青岛 · 约 280km / 3.5h",
+      },
+      {
+        id: "d4",
+        short: "D4",
+        title: "青岛全天",
+        date: "9.18 周五",
+        color: "#5a6fa8",
+        summary: "八大关 · 小麦岛 · 奥帆 · 五四广场",
+      },
+      {
+        id: "d5",
+        short: "D5",
+        title: "胖东来",
+        date: "9.19 周六",
+        color: "#c45c3e",
+        summary: "青岛 → 许昌 · 约 750km / 8h",
+      },
+    ];
+
+    const STOPS = [
+      {
+        id: "d1-depart", day: "d1", order: 1, time: "06:30",
+        name: "北京出发", type: "行程", city: "北京",
+        desc: "错开早高峰，长途自驾前往威海。",
+        tip: "准备好水和零食，中途服务区休息即可。",
+        lng: 116.397428, lat: 39.90923,
+        keyword: "天安门", resolved: true, resolvedName: "天安门", skipResolve: true
+      },
+      {
+        id: "d1-hotel", day: "d1", order: 2, time: "15:30",
+        name: "入住 · 威海北站附近", type: "住宿", city: "威海",
+        desc: "智选假日 / 亚朵 / 全季，约 350–500。先歇一会儿。",
+        tip: "海景房尽快订；确认停车。",
+        lng: 122.047161, lat: 37.496677,
+        keyword: "威海北站", resolved: true, resolvedName: "威海北站", lodging: true
+      },
+      {
+        id: "d1-beach", day: "d1", order: 3, time: "17:30",
+        name: "国际海水浴场", type: "海边", city: "威海",
+        desc: "傍晚散步看日落，海边初见。",
+        tip: "风大，带薄外套。",
+        lng: 122.042078, lat: 37.527543,
+        keyword: "威海国际海水浴场", poiId: "B02770ISI3",
+        resolved: true, resolvedName: "威海国际海水浴场"
+      },
+      {
+        id: "d1-seafood", day: "d1", order: 4, time: "19:00",
+        name: "合庆码头", type: "美食", city: "威海",
+        desc: "买海鲜加工。必吃：清蒸扇贝、辣炒蛤蜊、鲅鱼水饺、海胆蒸蛋、烤生蚝。配威海卫啤酒。",
+        tip: "让摊主帮忙加工，省事又新鲜。",
+        lng: 122.15192, lat: 37.519641,
+        keyword: "合庆码头", resolved: true, resolvedName: "合庆码头"
+      },
+      {
+        id: "d2-maotou", day: "d2", order: 1, time: "上午",
+        name: "半月湾北岸停车场（猫头山）", type: "打卡", city: "威海",
+        desc: "导航停「半月湾北岸停车场」，换乘观光车 20 元。打卡 3 / 10 / 12 / 13 号观景台。",
+        tip: "车票我买，你负责美。",
+        lng: 122.157085, lat: 37.532164,
+        keyword: "半月湾北岸停车场", resolved: true, resolvedName: "半月湾北岸停车场"
+      },
+      {
+        id: "d2-park", day: "d2", order: 2, time: "上午",
+        name: "喂海公园", type: "拍照", city: "威海",
+        desc: "草地海景，轻松出片。",
+        tip: "顺路打卡即可，不必久留。",
+        lng: 122.114594, lat: 37.549211,
+        keyword: "喂海公园", resolved: true, resolvedName: "喂海公园"
+      },
+      {
+        id: "d2-dumpling", day: "d2", order: 3, time: "中午",
+        name: "诚心水饺", type: "美食", city: "威海",
+        desc: "鲅鱼饺子巨大，本地人推荐。",
+        tip: "避开饭点高峰更好。",
+        lng: 122.137593, lat: 37.483373,
+        keyword: "诚心水饺", resolved: true, resolvedName: "诚心水饺"
+      },
+      {
+        id: "d2-hotel", day: "d2", order: 4, time: "下午",
+        name: "换住 · 韩乐坊附近", type: "住宿", city: "威海",
+        desc: "铂丽斯 / 希尔维亚，约 400–700。休息或去沙滩。",
+        tip: "韩乐坊停车位紧张，提前确认。",
+        lng: 122.153991, lat: 37.428035,
+        keyword: "韩乐坊", poiId: "B0FFGC7MCX",
+        resolved: true, resolvedName: "韩乐坊", lodging: true
+      },
+      {
+        id: "d2-sunset", day: "d2", order: 5, time: "傍晚",
+        name: "日落湾（小石岛海域）", type: "海边", city: "威海",
+        desc: "导航「日落湾」看绝美日落。点位对齐日落湾沙滩/房车营地一带。",
+        tip: "提前 40 分钟到，占好位置。",
+        lng: 122.018214, lat: 37.508385,
+        keyword: "日落湾沙滩房车营地", resolved: true, resolvedName: "日落湾沙滩房车营地"
+      },
+      {
+        id: "d2-night", day: "d2", order: 6, time: "晚上",
+        name: "韩乐坊夜市", type: "美食", city: "威海",
+        desc: "脊骨汤锅、韩式炸鸡、辣炒年糕。",
+        tip: "边逛边吃，不用点太多。",
+        lng: 122.153991, lat: 37.428035,
+        keyword: "韩乐坊", poiId: "B0FFGC7MCX",
+        resolved: true, resolvedName: "韩乐坊"
+      },
+      {
+        id: "d3-market", day: "d3", order: 1, time: "07:00",
+        name: "古陌早市", type: "早市", city: "威海",
+        desc: "9 点收摊。吃海菜包子，感受烟火气。",
+        tip: "一定要早，晚了只剩收摊。",
+        lng: 122.115174, lat: 37.517357,
+        keyword: "古陌早市", resolved: true, resolvedName: "古陌早市"
+      },
+      {
+        id: "d3-haiyuan", day: "d3", order: 2, time: "上午",
+        name: "海源公园", type: "散步", city: "威海",
+        desc: "一战华工纪念馆、合庆码头一带。",
+        tip: "中午前结束，好按时出发。",
+        lng: 122.150815, lat: 37.518995,
+        keyword: "海源公园", poiId: "B027700479",
+        resolved: true, resolvedName: "海源公园"
+      },
+      {
+        id: "d3-drive", day: "d3", order: 3, time: "13:00",
+        name: "出发前往青岛", type: "行程", city: "威海",
+        desc: "约 280km / 3.5h，预计 16:30 抵达。",
+        tip: "简餐后上路，别太赶。",
+        lng: 122.153991, lat: 37.428035,
+        keyword: "韩乐坊", resolved: true, resolvedName: "韩乐坊"
+      },
+      {
+        id: "d3-zhanqiao", day: "d3", order: 4, time: "17:00",
+        name: "栈桥", type: "海边", city: "青岛",
+        desc: "看海鸥，可沿鲁迅公园走到第一海水浴场。",
+        tip: "人多时从公园侧线更轻松。",
+        lng: 120.3193, lat: 36.061736,
+        keyword: "青岛栈桥", poiId: "B0FFG19SSX",
+        resolved: true, resolvedName: "栈桥景区"
+      },
+      {
+        id: "d3-beer", day: "d3", order: 5, time: "晚上",
+        name: "啤酒街 / 台东", type: "美食", city: "青岛",
+        desc: "辣炒蛤蜊、原浆啤酒。住青岛（连住 2 晚）。",
+        tip: "酒店建议汇泉王朝 / 栈桥王子，海景房优先。",
+        lng: 120.350832, lat: 36.08036,
+        keyword: "营口路啤酒街", resolved: true, resolvedName: "青岛啤酒街"
+      },
+      {
+        id: "d3-hotel", day: "d3", order: 6, time: "入住",
+        name: "青岛酒店（汇泉湾一带）", type: "住宿", city: "青岛",
+        desc: "汇泉王朝 / 栈桥王子，约 500–1000。停车紧张，提前确认。",
+        tip: "海景房尽快订。",
+        lng: 120.341325, lat: 36.057428,
+        keyword: "青岛第一海水浴场", poiId: "B0214019F9",
+        resolved: true, resolvedName: "青岛第一海水浴场", lodging: true
+      },
+      {
+        id: "d4-badaguan", day: "d4", order: 1, time: "上午",
+        name: "八大关", type: "散步", city: "青岛",
+        desc: "睡到自然醒，看老别墅。",
+        tip: "早上光线最好，适合慢慢走。",
+        lng: 120.350903, lat: 36.053625,
+        keyword: "八大关风景区", poiId: "B0214024B4",
+        resolved: true, resolvedName: "八大关风景区"
+      },
+      {
+        id: "d4-beach2", day: "d4", order: 2, time: "上午",
+        name: "第二海水浴场", type: "海边", city: "青岛",
+        desc: "从八大关走到二浴踩沙。",
+        tip: "可脱鞋踩水，注意潮汐。",
+        lng: 120.352169, lat: 36.050649,
+        keyword: "青岛第二海水浴场", poiId: "B0214024B1",
+        resolved: true, resolvedName: "青岛第二海水浴场"
+      },
+      {
+        id: "d4-lunch", day: "d4", order: 3, time: "中午",
+        name: "船歌鱼水饺", type: "美食", city: "青岛",
+        desc: "海鲜水饺，青岛味道。（图钉为闽江二路店）",
+        tip: "可能排队，错峰更好。",
+        lng: 120.398858, lat: 36.070744,
+        keyword: "船歌鱼水饺闽江二路", resolved: true, resolvedName: "船歌·鱼水饺青岛菜(闽江二路店)"
+      },
+      {
+        id: "d4-xiaomai", day: "d4", order: 4, time: "下午",
+        name: "小麦岛公园", type: "拍照", city: "青岛",
+        desc: "海边草地栈道，超适合拍照。",
+        tip: "下午侧光很出片。",
+        lng: 120.431045, lat: 36.054245,
+        keyword: "小麦岛公园", poiId: "B0FFK8OQLY",
+        resolved: true, resolvedName: "小麦岛公园"
+      },
+      {
+        id: "d4-aofan", day: "d4", order: 5, time: "傍晚",
+        name: "五四广场（奥帆中心旁）", type: "海边", city: "青岛",
+        desc: "看海景，晚上再来一杯原浆或找海景餐厅。",
+        tip: "日落前后人气最高。",
+        lng: 120.384576, lat: 36.06274,
+        keyword: "五四广场", poiId: "B021402991",
+        resolved: true, resolvedName: "五四广场"
+      },
+      {
+        id: "d5-depart", day: "d5", order: 1, time: "07:00",
+        name: "青岛出发", type: "行程", city: "青岛",
+        desc: "奔赴许昌，约 750km / 8h，下午 3 点左右到。",
+        tip: "唯一要早起的一天。",
+        lng: 120.341325, lat: 36.057428,
+        keyword: "青岛第一海水浴场", resolved: true, resolvedName: "青岛第一海水浴场"
+      },
+      {
+        id: "d5-pdl", day: "d5", order: 2, time: "15:00",
+        name: "胖东来时代广场店", type: "购物", city: "许昌",
+        desc: "必买：网红大月饼、自制熟食、烘焙、鲜榨果汁、自营白酒。想买什么就买什么。",
+        tip: "后备箱够大；人多可先去餐饮再采购。",
+        lng: 113.833148, lat: 34.018443,
+        keyword: "胖东来时代广场店", poiId: "B01760MSB0",
+        resolved: true, resolvedName: "DL胖东来(许昌时代广场店)"
+      },
+      {
+        id: "d5-hotel", day: "d5", order: 3, time: "晚上",
+        name: "许昌住宿（可选）", type: "住宿", city: "许昌",
+        desc: "中原国际 / 亚朵，约 300–500。吃烩面、胡辣汤。",
+        tip: "也可当晚继续返程。",
+        lng: 113.8355, lat: 34.022,
+        keyword: "许昌亚朵酒店", resolved: true, resolvedName: "许昌亚朵酒店", lodging: true
+      }
+    ];
+
+    const dayMap = Object.fromEntries(DAYS.map((d) => [d.id, d]));
+
+    let activeDay = "all";
+    let selectedId = null;
+    const markersById = {};
+    let routeLine = null;
+    let map = null;
+    let drawerSnap = "half"; // peek | half | full
+
+    function isMobile() {
+      return window.matchMedia("(max-width: 860px)").matches;
+    }
+
+    function setDrawerSnap(snap) {
+      drawerSnap = snap;
+      const rail = document.getElementById("rail");
+      if (!rail) return;
+      rail.dataset.snap = snap;
+      const toggle = document.getElementById("peekToggle");
+      if (toggle) {
+        toggle.textContent = snap === "full" ? "收起" : snap === "peek" ? "展开" : "更大";
+      }
+      updatePeekCopy();
+      // 抽屉高度变化后刷新地图可视区
+      setTimeout(() => {
+        if (!map) return;
+        map.resize();
+        fitToVisible();
+      }, 300);
+    }
+
+    function updatePeekCopy() {
+      const day = dayMap[activeDay];
+      const count = visibleStops().length;
+      const title = document.getElementById("peekTitle");
+      const sub = document.getElementById("peekSub");
+      if (!title || !sub) return;
+      if (activeDay === "all") {
+        title.textContent = `全部行程 · ${count} 站`;
+        sub.textContent = drawerSnap === "peek" ? "上滑查看日程" : "点地点可导航到高德";
+      } else {
+        title.textContent = `${day.short} ${day.title} · ${count} 站`;
+        sub.textContent = day.date + (day.summary ? " · " + day.summary.split("·")[0].trim() : "");
+      }
+    }
+
+    function setupMobileDrawer() {
+      const grab = document.getElementById("drawerGrab");
+      const toggle = document.getElementById("peekToggle");
+      const mobileFit = document.getElementById("mobileFitBtn");
+      if (!grab) return;
+
+      const order = ["peek", "half", "full"];
+      const cycle = (dir) => {
+        const i = order.indexOf(drawerSnap);
+        const next = order[Math.max(0, Math.min(order.length - 1, i + dir))];
+        setDrawerSnap(next);
+      };
+
+      toggle && toggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (drawerSnap === "full") setDrawerSnap("half");
+        else if (drawerSnap === "half") setDrawerSnap("full");
+        else setDrawerSnap("half");
+      });
+
+      grab.addEventListener("click", () => {
+        if (drawerSnap === "peek") setDrawerSnap("half");
+        else if (drawerSnap === "half") setDrawerSnap("full");
+        else setDrawerSnap("half");
+      });
+
+      let startY = 0;
+      let startSnap = "half";
+      grab.addEventListener("touchstart", (e) => {
+        startY = e.touches[0].clientY;
+        startSnap = drawerSnap;
+      }, { passive: true });
+      grab.addEventListener("touchend", (e) => {
+        const dy = e.changedTouches[0].clientY - startY;
+        if (Math.abs(dy) < 28) return;
+        if (dy < 0) cycle(1); // 上滑放大
+        else cycle(-1); // 下滑缩小
+      }, { passive: true });
+
+      mobileFit && mobileFit.addEventListener("click", () => {
+        activeDay = "all";
+        selectedId = null;
+        closeSheet();
+        renderDayFilters();
+        renderList();
+        renderMarkers();
+        setDrawerSnap("peek");
+        fitToVisible();
+      });
+
+      // 手机默认看「半屏日程 + 地图」，并优先落到 Day1 更贴近出行
+      if (isMobile()) {
+        activeDay = "d1";
+        setDrawerSnap("half");
+      }
+
+      window.addEventListener("resize", () => {
+        if (!isMobile()) {
+          document.getElementById("rail").dataset.snap = "half";
+        }
+        if (map) {
+          map.resize();
+          fitToVisible();
+        }
+      });
+    }
+
+    function amapNavUrl(stop) {
+      const name = encodeURIComponent(stop.keyword || stop.name);
+      return `https://uri.amap.com/navigation?to=${stop.lng},${stop.lat},${name}&mode=car&coordinate=gaode&callnative=1&src=coast-trip`;
+    }
+
+    function setMapStatus(html, isError) {
+      const el = document.getElementById("mapStatus");
+      if (!el) return;
+      if (!html) {
+        el.classList.add("hide");
+        return;
+      }
+      el.classList.remove("hide");
+      el.classList.toggle("error", !!isError);
+      el.innerHTML = html;
+    }
+
+    function pinHtml(stop, selected) {
+      const color = dayMap[stop.day].color;
+      const cls = `pin${stop.lodging ? " lodging" : ""}${selected ? " selected" : ""}`;
+      const label = stop.lodging ? "宿" : String(stop.order);
+      return `<div class="${cls}" style="background:${color}"><span>${label}</span></div>`;
+    }
+
+    function initMap() {
+      map = new AMap.Map("map", {
+        zoom: 7,
+        center: [120.8, 36.9],
+        viewMode: "2D",
+        // 与高德官网一致的标准底图（道路彩线、绿地、水域）
+        mapStyle: "amap://styles/normal",
+        features: ["bg", "road", "building", "point"],
+        showLabel: true,
+        resizeEnable: true,
+      });
+
+      map.on("complete", async () => {
+        setMapStatus("<strong>正在用高德校准景点位置…</strong>请稍候");
+        try {
+          await resolveAllPlaces();
+        } catch (e) {
+          console.warn(e);
+        }
+        setMapStatus("");
+        renderMarkers();
+        fitToVisible();
+      });
+
+      const refresh = () => {
+        if (map) {
+          map.resize();
+        }
+      };
+      setTimeout(refresh, 200);
+      setTimeout(refresh, 600);
+      window.addEventListener("resize", () => map && map.resize());
+      window.addEventListener("orientationchange", () => {
+        setTimeout(() => map && map.resize(), 300);
+      });
+    }
+
+    function loadPlaceSearch() {
+      return new Promise((resolve, reject) => {
+        if (window.__placeSearch) return resolve(window.__placeSearch);
+        AMap.plugin(["AMap.PlaceSearch"], () => {
+          window.__placeSearch = new AMap.PlaceSearch({
+            pageSize: 8,
+            pageIndex: 1,
+            citylimit: false,
+          });
+          resolve(window.__placeSearch);
+        });
+        setTimeout(() => {
+          if (!window.__placeSearch) reject(new Error("PlaceSearch 加载超时"));
+        }, 8000);
+      });
+    }
+
+        function pickBestPoi(pois, stop) {
+      if (!pois || !pois.length) return null;
+      if (stop.id === "d2-sunset") {
+        const prefer = pois.find((p) => /日落湾(沙滩|海水浴场|房车)/.test(p.name))
+          || pois.find((p) => /日落湾/.test(p.name) && !/民宿|酒店|俱乐部/.test(p.name));
+        if (prefer) return prefer;
+      }
+      if (stop.id === "d2-dumpling") {
+        const prefer = pois.find((p) => p.name === "诚心水饺") || pois.find((p) => /诚心水饺/.test(p.name));
+        if (prefer) return prefer;
+      }
+      if (stop.id === "d2-park") {
+        const prefer = pois.find((p) => p.name === "喂海公园" || /喂.?海/.test(p.name));
+        if (prefer) return prefer;
+      }
+      const keys = [stop.keyword, stop.altKeyword, stop.name]
+        .filter(Boolean)
+        .map((s) => String(s).replace(/[·！!]/g, "").trim());
+      for (const key of keys) {
+        const hit = pois.find((p) => p.name && (p.name.includes(key) || key.includes(p.name)));
+        if (hit) return hit;
+      }
+      if ((stop.keyword || "").includes("停车")) {
+        const park = pois.find((p) => /停车/.test(p.name));
+        if (park) return park;
+      }
+      return pois[0];
+    }
+
+    function applyPoi(stop, poi) {
+      if (!poi || !poi.location) return false;
+      const lng = typeof poi.location.getLng === "function" ? poi.location.getLng() : poi.location.lng;
+      const lat = typeof poi.location.getLat === "function" ? poi.location.getLat() : poi.location.lat;
+      if (!lng || !lat) return false;
+      stop.lng = Number(lng);
+      stop.lat = Number(lat);
+      stop.resolvedName = poi.name;
+      stop.resolved = true;
+      return true;
+    }
+
+    function searchOnce(ps, keyword, city) {
+      return new Promise((resolve) => {
+        ps.setCity(city || "全国");
+        ps.search(keyword, (status, result) => {
+          if (status === "complete" && result && result.poiList && result.poiList.pois) {
+            resolve(result.poiList.pois);
+          } else {
+            resolve([]);
+          }
+        });
+      });
+    }
+
+    function detailsOnce(ps, poiId) {
+      return new Promise((resolve) => {
+        ps.getDetails(poiId, (status, result) => {
+          if (status === "complete" && result && result.poiList && result.poiList.pois && result.poiList.pois[0]) {
+            resolve(result.poiList.pois[0]);
+          } else if (status === "complete" && result && result.poi) {
+            resolve(result.poi);
+          } else {
+            resolve(null);
+          }
+        });
+      });
+    }
+
+    async function resolveOnePlace(ps, stop) {
+      if (stop.skipResolve) return stop;
+
+      if (stop.poiId) {
+        const detail = await detailsOnce(ps, stop.poiId);
+        if (applyPoi(stop, detail)) return stop;
+      }
+
+      const tries = [stop.keyword, stop.altKeyword].filter(Boolean);
+      for (const kw of tries) {
+        const pois = await searchOnce(ps, kw, stop.city);
+        const best = pickBestPoi(pois, stop);
+        if (applyPoi(stop, best)) return stop;
+      }
+
+      // 合庆码头兜底：海源公园
+      if (stop.id === "d1-seafood") {
+        const detail = await detailsOnce(ps, "B027700479");
+        if (applyPoi(stop, detail)) {
+          stop.resolvedName = (stop.resolvedName || "") + "（合庆码头附近）";
+          return stop;
+        }
+      }
+
+      // 喂海兜底：葡萄滩附近搜喂
+      if (stop.id === "d2-park") {
+        const pois = await searchOnce(ps, "喂海公园", "威海");
+        if (applyPoi(stop, pickBestPoi(pois, stop))) return stop;
+      }
+
+      // 日落湾兜底：文化西路地址
+      if (stop.id === "d2-sunset") {
+        const pois = await searchOnce(ps, "文化西路358号", "威海");
+        if (applyPoi(stop, pickBestPoi(pois, { keyword: "日落" }))) return stop;
+      }
+
+      return stop;
+    }
+
+    async function resolveAllPlaces() {
+      const ps = await loadPlaceSearch();
+      // 串行更稳，避免并发限流
+      for (const stop of STOPS) {
+        await resolveOnePlace(ps, stop);
+      }
+      console.log(
+        "POI校准完成",
+        STOPS.map((s) => ({
+          id: s.id,
+          name: s.name,
+          resolved: s.resolvedName || "(未校准)",
+          lng: s.lng,
+          lat: s.lat,
+        }))
+      );
+    }
+
+    function visibleStops() {
+      return STOPS.filter((s) => activeDay === "all" || s.day === activeDay);
+    }
+
+    function renderDayFilters() {
+      const el = document.getElementById("dayFilters");
+      const mobile = isMobile();
+      el.innerHTML = DAYS.map((d) => {
+        const title = mobile
+          ? (d.id === "all" ? "全览" : d.short)
+          : (d.short === "全部" ? "全览" : d.short + " · " + d.title);
+        const label = mobile ? (d.id === "all" ? "5天" : d.date.replace(/周.*/, "").trim()) : d.date;
+        return `
+        <button type="button" class="day-btn${activeDay === d.id ? " active" : ""}" data-day="${d.id}" role="tab" aria-selected="${activeDay === d.id}">
+          <span class="d-label">${label}</span>
+          <span class="d-title">${title}</span>
+        </button>`;
+      }).join("");
+      el.querySelectorAll(".day-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          activeDay = btn.dataset.day;
+          selectedId = null;
+          closeSheet();
+          renderDayFilters();
+          renderList();
+          renderMarkers();
+          updatePeekCopy();
+          if (isMobile() && drawerSnap === "peek") setDrawerSnap("half");
+          fitToVisible();
+        });
+      });
+      updatePeekCopy();
+    }
+
+    function renderList() {
+      const el = document.getElementById("stopList");
+      const daysToShow = activeDay === "all"
+        ? DAYS.filter((d) => d.id !== "all")
+        : [dayMap[activeDay]];
+
+      el.innerHTML = daysToShow.map((day) => {
+        const stops = STOPS.filter((s) => s.day === day.id);
+        return `
+          <section class="list-section" data-day-section="${day.id}">
+            <h2><span class="dot" style="background:${day.color}"></span>${day.date} · ${day.title}</h2>
+            ${day.summary ? `<p style="font-size:12px;color:var(--ink-soft);margin:-4px 6px 10px;line-height:1.45">${day.summary}</p>` : ""}
+            ${stops.map((s) => `
+              <button type="button" class="stop${selectedId === s.id ? " selected" : ""}" data-id="${s.id}" style="--accent:${day.color}">
+                <div class="stop-time">${s.time}</div>
+                <div class="stop-name">${s.name}</div>
+                <div class="stop-desc">${s.desc}</div>
+                <span class="stop-type">${s.type} · ${s.city}</span>
+              </button>
+            `).join("")}
+          </section>
+        `;
+      }).join("");
+
+      el.querySelectorAll(".stop").forEach((btn) => {
+        btn.addEventListener("click", () => selectStop(btn.dataset.id, { fromList: true }));
+      });
+    }
+
+    function clearMarkers() {
+      if (!map) return;
+      Object.values(markersById).forEach((m) => map.remove(m));
+      Object.keys(markersById).forEach((k) => delete markersById[k]);
+      if (routeLine) {
+        map.remove(routeLine);
+        routeLine = null;
+      }
+    }
+
+    function renderMarkers() {
+      if (!map) return;
+      clearMarkers();
+      const stops = visibleStops();
+
+      stops.forEach((stop) => {
+        const marker = new AMap.Marker({
+          position: [stop.lng, stop.lat],
+          content: pinHtml(stop, selectedId === stop.id),
+          offset: new AMap.Pixel(-17, -30),
+          title: stop.name,
+          zIndex: selectedId === stop.id ? 120 : 100,
+        });
+        marker.on("click", () => selectStop(stop.id, { fromMap: true }));
+        map.add(marker);
+        markersById[stop.id] = marker;
+      });
+
+      if (activeDay !== "all" && stops.length > 1) {
+        const path = [...stops]
+          .sort((a, b) => a.order - b.order)
+          .map((s) => [s.lng, s.lat]);
+        routeLine = new AMap.Polyline({
+          path,
+          strokeColor: dayMap[activeDay].color,
+          strokeWeight: 4,
+          strokeOpacity: 0.7,
+          strokeStyle: "dashed",
+          strokeDasharray: [10, 8],
+          lineJoin: "round",
+          zIndex: 50,
+        });
+        map.add(routeLine);
+      }
+    }
+
+    function fitToVisible() {
+      if (!map) return;
+      const markers = Object.values(markersById);
+      if (!markers.length) return;
+      // 手机要避开顶栏和底部抽屉，否则图钉会被挡住
+      const pad = isMobile()
+        ? [90, 24, Math.round(window.innerHeight * (drawerSnap === "full" ? 0.55 : drawerSnap === "half" ? 0.42 : 0.22)), 24]
+        : [48, 48, 48, 48];
+      map.setFitView(markers, false, pad);
+    }
+
+    function selectStop(id, opts = {}) {
+      const stop = STOPS.find((s) => s.id === id);
+      if (!stop) return;
+      selectedId = id;
+
+      document.querySelectorAll(".stop").forEach((el) => {
+        el.classList.toggle("selected", el.dataset.id === id);
+      });
+
+      Object.entries(markersById).forEach(([mid, marker]) => {
+        const s = STOPS.find((x) => x.id === mid);
+        if (!s) return;
+        marker.setContent(pinHtml(s, mid === id));
+        marker.setzIndex(mid === id ? 120 : 100);
+      });
+
+      openSheet(stop);
+
+      if (map) {
+        const zoom = Math.max(map.getZoom(), isMobile() ? 14 : 13);
+        if (opts.fromList || opts.fromMap) {
+          map.setZoomAndCenter(zoom, [stop.lng, stop.lat], true, 400);
+        }
+      }
+
+      const listItem = document.querySelector(`.stop[data-id="${id}"]`);
+      if (listItem && opts.fromMap && !isMobile()) {
+        listItem.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+      // 手机点地图图钉：收一点抽屉，让详情卡 + 导航更突出
+      if (isMobile() && opts.fromMap && drawerSnap === "full") {
+        setDrawerSnap("half");
+      }
+    }
+
+    function openSheet(stop) {
+      const day = dayMap[stop.day];
+      const sheet = document.getElementById("sheet");
+      document.getElementById("sheetDay").textContent = `${day.date} · ${day.title} · ${stop.time}`;
+      document.getElementById("sheetDay").style.color = day.color;
+      document.getElementById("sheetTitle").textContent = stop.name;
+      document.getElementById("sheetBody").innerHTML = `
+        <p>${stop.desc}</p>
+        ${stop.tip ? `<p style="margin-top:8px"><strong style="color:var(--ink)">小贴士</strong> · ${stop.tip}</p>` : ""}
+        ${stop.resolvedName ? `<p style="margin-top:8px;font-size:12px;color:var(--ink-soft)">高德定位：${stop.resolvedName}<br/>${stop.lng.toFixed(6)}, ${stop.lat.toFixed(6)}</p>` : `<p style="margin-top:8px;font-size:12px;color:var(--coral)">该点暂未校准到高德 POI，导航将按关键词搜索</p>`}
+      `;
+      const nav = document.getElementById("navBtn");
+      // 已校准用坐标导航；未校准用关键词搜索更稳
+      if (stop.resolved) {
+        nav.href = amapNavUrl(stop);
+      } else {
+        const kw = encodeURIComponent(stop.keyword || stop.name);
+        const city = encodeURIComponent(stop.city || "");
+        nav.href = `https://uri.amap.com/search?keyword=${kw}&city=${city}&callnative=1&src=coast-trip`;
+      }
+      sheet.classList.add("open");
+      const railEl = document.getElementById("rail");
+      if (railEl) railEl.classList.add("sheet-open");
+      const hint = document.getElementById("hudHint");
+      if (hint) hint.style.display = "none";
+    }
+
+    function closeSheet() {
+      document.getElementById("sheet").classList.remove("open");
+      const railEl = document.getElementById("rail");
+      if (railEl) railEl.classList.remove("sheet-open");
+      selectedId = null;
+      document.querySelectorAll(".stop").forEach((el) => el.classList.remove("selected"));
+      Object.entries(markersById).forEach(([mid, marker]) => {
+        const s = STOPS.find((x) => x.id === mid);
+        if (s) {
+          marker.setContent(pinHtml(s, false));
+          marker.setzIndex(100);
+        }
+      });
+      const hint = document.getElementById("hudHint");
+      if (hint) hint.style.display = "";
+    }
+
+    document.getElementById("sheetClose").addEventListener("click", closeSheet);
+    document.getElementById("fitBtn").addEventListener("click", fitToVisible);
+    document.getElementById("focusBtn").addEventListener("click", () => {
+      const stop = STOPS.find((s) => s.id === selectedId);
+      if (stop && map) {
+        if (isMobile()) setDrawerSnap("peek");
+        map.setZoomAndCenter(15, [stop.lng, stop.lat], true, 400);
+      }
+    });
+
+    setupMobileDrawer();
+    renderDayFilters();
+    renderList();
+    updatePeekCopy();
+
+    (function boot() {
+      if (typeof AMap === "undefined") {
+        setMapStatus(
+          `<strong>高德地图加载失败</strong>请确认：① 控制台已绑定「Web端 JS API」；② 域名白名单含当前地址（局域网可填 <code>192.168.2.167</code>，本地调试可临时填 <code>*</code>）；③ 用系统浏览器打开，不要用微信内置预览。`,
+          true
+        );
+        return;
+      }
+      try {
+        initMap();
+      } catch (e) {
+        setMapStatus(
+          `<strong>地图初始化失败</strong>${String(e && e.message ? e.message : e)}`,
+          true
+        );
+      }
+    })();
+  </script>
+</body>
+</html>
