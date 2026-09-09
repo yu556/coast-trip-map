@@ -49,13 +49,13 @@
 
     .app {
       display: grid;
-      grid-template-columns: minmax(320px, 400px) 1fr;
+      grid-template-columns: minmax(340px, 420px) 1fr;
       width: 100%;
       height: 100%;
       height: 100dvh;
     }
 
-    /* —— Left rail —— */
+    /* —— Left rail（PC 行程卡片固定左侧） —— */
     .rail {
       display: flex;
       flex-direction: column;
@@ -64,6 +64,14 @@
       border-right: 1px solid var(--line);
       z-index: 500;
       min-height: 0;
+      grid-column: 1;
+      grid-row: 1;
+      animation: rail-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    @keyframes rail-in {
+      from { opacity: 0; transform: translateX(-12px); }
+      to { opacity: 1; transform: translateX(0); }
     }
 
     .brand {
@@ -117,25 +125,24 @@
     }
 
     .days {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 8px;
-      padding: 14px 16px;
-      overflow-x: auto;
+      padding: 12px 14px;
       border-bottom: 1px solid var(--line);
-      scrollbar-width: none;
+      flex-shrink: 0;
     }
-    .days::-webkit-scrollbar { display: none; }
 
     .day-btn {
-      flex: 0 0 auto;
+      min-width: 0;
+      width: 100%;
       border: 1px solid var(--line);
       background: #fff;
       color: var(--ink-soft);
       border-radius: 14px;
-      padding: 10px 12px;
+      padding: 10px 8px;
       cursor: pointer;
       text-align: left;
-      min-width: 72px;
       transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.15s;
     }
     .day-btn:hover { transform: translateY(-1px); border-color: rgba(26, 107, 122, 0.35); }
@@ -144,8 +151,23 @@
       color: #fff;
       border-color: var(--sea-deep);
     }
-    .day-btn .d-label { display: block; font-size: 11px; opacity: 0.75; }
-    .day-btn .d-title { display: block; font-size: 13px; font-weight: 600; margin-top: 2px; }
+    .day-btn .d-label {
+      display: block;
+      font-size: 11px;
+      opacity: 0.75;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .day-btn .d-title {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
     .list {
       flex: 1;
@@ -185,7 +207,7 @@
       padding: 14px 14px 14px 16px;
       margin-bottom: 8px;
       cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
+      transition: border-color 0.18s, background 0.18s, transform 0.18s, box-shadow 0.18s;
       position: relative;
       overflow: hidden;
     }
@@ -196,10 +218,19 @@
       width: 3px;
       background: var(--accent, var(--sea));
     }
-    .stop:hover { border-color: rgba(26, 107, 122, 0.25); }
+    .stop:hover {
+      border-color: rgba(26, 107, 122, 0.25);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(18, 38, 58, 0.08);
+    }
+    .stop:active { transform: translateY(0); }
     .stop.selected {
       border-color: rgba(26, 107, 122, 0.45);
       background: var(--foam);
+      box-shadow: 0 8px 22px rgba(26, 107, 122, 0.12);
+    }
+    .stop.lodging-card {
+      background: linear-gradient(135deg, #fff 0%, rgba(26, 107, 122, 0.04) 100%);
     }
 
     .stop-time {
@@ -237,6 +268,14 @@
       min-height: 0;
       height: 100%;
       background: #d5e4e8;
+      grid-column: 2;
+      grid-row: 1;
+      animation: map-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+    }
+
+    @keyframes map-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
 
     #map {
@@ -313,26 +352,28 @@
     }
     .fit-btn:hover { background: var(--sea); }
 
-    /* Detail sheet */
+    /* Detail sheet —— PC 贴地图左侧，贴近行程栏 */
     .sheet {
       position: absolute;
-      left: 16px;
-      right: 16px;
-      bottom: 16px;
+      left: 20px;
+      right: auto;
+      bottom: 20px;
       z-index: 460;
-      background: rgba(255, 252, 248, 0.96);
+      width: min(360px, calc(100% - 40px));
+      max-width: 360px;
+      background: rgba(255, 252, 248, 0.97);
       border: 1px solid var(--line);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       padding: 18px 18px 16px;
-      transform: translateY(120%);
+      transform: translateX(-18px) translateY(8px);
       opacity: 0;
       pointer-events: none;
-      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s;
-      max-width: 480px;
+      transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s;
+      backdrop-filter: blur(10px);
     }
     .sheet.open {
-      transform: translateY(0);
+      transform: translateX(0) translateY(0);
       opacity: 1;
       pointer-events: auto;
     }
@@ -407,6 +448,46 @@
       color: var(--ink);
     }
 
+    /* 路线中点：距离 + 驾车时间 */
+    .route-label {
+      background: rgba(255, 252, 248, 0.96);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--ink);
+      box-shadow: 0 4px 14px rgba(18, 38, 58, 0.16);
+      white-space: nowrap;
+      pointer-events: none;
+      line-height: 1.2;
+    }
+    .route-label .route-label-time {
+      color: var(--sea-deep);
+    }
+    .route-label .route-label-sep {
+      opacity: 0.35;
+      margin: 0 4px;
+    }
+
+    .leg-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 2px 10px 8px;
+      padding: 6px 10px;
+      font-size: 11px;
+      color: var(--ink-soft);
+      border-left: 2px dashed var(--accent, var(--sea));
+      line-height: 1.3;
+    }
+    .leg-chip strong {
+      color: var(--sea-deep);
+      font-weight: 600;
+    }
+    .leg-chip.pending { opacity: 0.55; }
+    .leg-chip.fail { color: var(--coral); border-left-style: solid; }
+
     /* Map marker pin */
     .pin {
       width: 34px;
@@ -418,7 +499,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.15s;
+      transition: transform 0.2s, opacity 0.2s, box-shadow 0.2s, filter 0.2s;
     }
     .pin span {
       transform: rotate(45deg);
@@ -428,12 +509,50 @@
       font-family: var(--font-body);
     }
     .pin.selected {
-      transform: rotate(-45deg) scale(1.18);
+      transform: rotate(-45deg) scale(1.22);
       box-shadow: 0 6px 18px rgba(18, 38, 58, 0.45);
+      z-index: 2;
+    }
+    .pin.lit {
+      transform: rotate(-45deg) scale(1.22);
+      border-width: 3px;
+      box-shadow:
+        0 0 0 4px rgba(255, 255, 255, 0.95),
+        0 0 0 9px rgba(26, 107, 122, 0.4),
+        0 8px 22px rgba(18, 38, 58, 0.45);
+      animation: pin-lit-pulse 1.2s ease-out 1;
+      z-index: 2;
+    }
+    .pin.lit.selected {
+      transform: rotate(-45deg) scale(1.26);
+    }
+    .pin.dim {
+      opacity: 0.28;
+      filter: grayscale(0.55);
+      transform: rotate(-45deg) scale(0.78);
+      box-shadow: 0 2px 6px rgba(18, 38, 58, 0.2);
+      pointer-events: auto;
     }
     .pin.lodging { border-radius: 8px; transform: none; }
     .pin.lodging span { transform: none; }
-    .pin.lodging.selected { transform: scale(1.12); }
+    .pin.lodging.selected { transform: scale(1.14); }
+    .pin.lodging.lit {
+      transform: scale(1.18);
+      animation: pin-lit-pulse-box 1.2s ease-out 1;
+    }
+    .pin.lodging.lit.selected { transform: scale(1.22); }
+    .pin.lodging.dim { transform: scale(0.78); }
+
+    @keyframes pin-lit-pulse {
+      0% { box-shadow: 0 0 0 0 rgba(26, 107, 122, 0.55), 0 8px 22px rgba(18, 38, 58, 0.35); }
+      70% { box-shadow: 0 0 0 14px rgba(26, 107, 122, 0), 0 8px 22px rgba(18, 38, 58, 0.35); }
+      100% { box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.95), 0 0 0 8px rgba(26, 107, 122, 0.35), 0 8px 22px rgba(18, 38, 58, 0.45); }
+    }
+    @keyframes pin-lit-pulse-box {
+      0% { box-shadow: 0 0 0 0 rgba(26, 107, 122, 0.55); }
+      70% { box-shadow: 0 0 0 14px rgba(26, 107, 122, 0); }
+      100% { box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.95), 0 0 0 8px rgba(26, 107, 122, 0.35), 0 8px 22px rgba(18, 38, 58, 0.45); }
+    }
 
     .amap-logo, .amap-copyright { opacity: 0.7 !important; }
     .amap-marker-label { border: none !important; background: transparent !important; }
@@ -452,6 +571,13 @@
         height: 100dvh;
       }
 
+      .rail,
+      .map-wrap {
+        grid-column: unset;
+        grid-row: unset;
+        animation: none;
+      }
+
       .mobile-bar {
         display: flex;
         align-items: center;
@@ -465,6 +591,7 @@
         padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 10px;
         background: rgba(255, 252, 248, 0.94);
         border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
       }
       .mobile-bar-text { min-width: 0; }
       .mobile-bar-kicker {
@@ -494,11 +621,13 @@
         font-family: inherit;
         font-size: 12px;
         font-weight: 600;
-        padding: 8px 12px;
+        padding: 10px 14px;
+        min-height: 40px;
         border-radius: 999px;
         border: 1px solid var(--line);
         white-space: nowrap;
         flex-shrink: 0;
+        -webkit-tap-highlight-color: transparent;
       }
 
       .map-wrap {
@@ -537,8 +666,8 @@
         overflow: hidden;
         min-height: 0;
       }
-      .rail[data-snap="peek"] { --drawer-h: calc(168px + env(safe-area-inset-bottom, 0px)); }
-      .rail[data-snap="half"] { --drawer-h: 46dvh; }
+      .rail[data-snap="peek"] { --drawer-h: calc(148px + env(safe-area-inset-bottom, 0px)); }
+      .rail[data-snap="half"] { --drawer-h: 38dvh; }
       .rail[data-snap="full"] { --drawer-h: calc(88dvh - env(safe-area-inset-top, 0px)); }
 
       .drawer-grab {
@@ -571,6 +700,10 @@
         font-size: 12px;
         color: var(--ink-soft);
         margin-top: 2px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
       }
       .peek-toggle {
         border: none;
@@ -579,9 +712,11 @@
         font-family: inherit;
         font-size: 12px;
         font-weight: 600;
-        padding: 8px 12px;
+        padding: 10px 14px;
+        min-height: 40px;
         border-radius: 999px;
         flex-shrink: 0;
+        -webkit-tap-highlight-color: transparent;
       }
 
       .brand {
@@ -589,13 +724,17 @@
       }
 
       .days {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         padding: 4px 12px 10px;
         border-bottom: 1px solid var(--line);
         gap: 6px;
+        flex-shrink: 0;
       }
       .day-btn {
-        min-width: 56px;
-        padding: 8px 10px;
+        min-width: 0;
+        width: 100%;
+        padding: 8px 8px;
         border-radius: 12px;
         -webkit-tap-highlight-color: transparent;
       }
@@ -611,7 +750,9 @@
         border-radius: 14px;
         margin-bottom: 6px;
         -webkit-tap-highlight-color: transparent;
+        box-shadow: none;
       }
+      .stop:hover { transform: none; box-shadow: none; }
       .stop-name { font-size: 14px; }
       .stop-desc {
         display: -webkit-box;
@@ -621,20 +762,31 @@
       }
       .list-section h2 { margin: 4px 4px 8px; font-size: 11px; }
 
-      /* 详情贴在抽屉上方，拇指可点导航 */
+      /* 手机：详情卡从底部升起，贴在抽屉上方 */
       .sheet {
         left: 10px;
         right: 10px;
         bottom: calc(var(--drawer-h, 38dvh) + 8px);
+        width: auto;
         max-width: none;
-        padding: 14px 14px calc(12px + env(safe-area-inset-bottom, 0px));
+        padding: 14px 14px 12px;
         border-radius: 18px;
         z-index: 560;
+        transform: translateY(24px);
+      }
+      .sheet.open {
+        transform: translateY(0);
       }
       .sheet h3 { font-size: 18px; }
-      .sheet-actions { flex-wrap: nowrap; }
+      .sheet-actions { flex-wrap: nowrap; margin-top: 12px; }
+      .sheet-close {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        font-size: 20px;
+      }
       .btn {
-        min-height: 44px;
+        min-height: 48px;
         font-size: 14px;
         padding: 12px 14px;
       }
@@ -651,6 +803,19 @@
     @media (min-width: 861px) {
       .mobile-bar { display: none !important; }
       .drawer-grab { display: none !important; }
+
+      /* PC：地图适配时给左侧详情卡留底边距 */
+      .map-hud {
+        top: 20px;
+        right: 20px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
     }
 
     @keyframes pulse-ring {
@@ -671,32 +836,6 @@
       </div>
       <button type="button" class="mobile-fit" id="mobileFitBtn">全览</button>
     </header>
-
-    <main class="map-wrap">
-      <div id="map" role="application" aria-label="行程地图"></div>
-      <div class="map-status" id="mapStatus"><strong>地图加载中…</strong>请保持网络畅通</div>
-      <div class="map-hud">
-        <button type="button" class="fit-btn" id="fitBtn">适配当前行程</button>
-        <div class="hud-card" id="hudHint">
-          <strong>怎么用</strong>
-          打开后会自动用高德校准景点坐标；点日程或图钉查看详情并导航。
-        </div>
-      </div>
-      <div class="sheet" id="sheet" aria-live="polite">
-        <div class="sheet-top">
-          <div>
-            <div class="sheet-day" id="sheetDay"></div>
-            <h3 id="sheetTitle"></h3>
-          </div>
-          <button type="button" class="sheet-close" id="sheetClose" aria-label="关闭">×</button>
-        </div>
-        <div class="sheet-body" id="sheetBody"></div>
-        <div class="sheet-actions">
-          <a class="btn btn-primary" id="navBtn" href="#" target="_blank" rel="noopener">高德导航</a>
-          <button type="button" class="btn btn-ghost" id="focusBtn">看地图</button>
-        </div>
-      </div>
-    </main>
 
     <aside class="rail" id="rail" data-snap="half">
       <div class="drawer-grab" id="drawerGrab" aria-label="拖动调整日程面板">
@@ -724,6 +863,32 @@
       <div class="days" id="dayFilters" role="tablist" aria-label="按天筛选"></div>
       <div class="list" id="stopList"></div>
     </aside>
+
+    <main class="map-wrap">
+      <div id="map" role="application" aria-label="行程地图"></div>
+      <div class="map-status" id="mapStatus"><strong>地图加载中…</strong>请保持网络畅通</div>
+      <div class="map-hud">
+        <button type="button" class="fit-btn" id="fitBtn">适配当前行程</button>
+        <div class="hud-card" id="hudHint">
+          <strong>怎么用</strong>
+          左侧选日程，点地点看详情；地图图钉可导航到高德。
+        </div>
+      </div>
+      <div class="sheet" id="sheet" aria-live="polite">
+        <div class="sheet-top">
+          <div>
+            <div class="sheet-day" id="sheetDay"></div>
+            <h3 id="sheetTitle"></h3>
+          </div>
+          <button type="button" class="sheet-close" id="sheetClose" aria-label="关闭">×</button>
+        </div>
+        <div class="sheet-body" id="sheetBody"></div>
+        <div class="sheet-actions">
+          <a class="btn btn-primary" id="navBtn" href="#" target="_blank" rel="noopener">高德导航</a>
+          <button type="button" class="btn btn-ghost" id="focusBtn">看地图</button>
+        </div>
+      </div>
+    </main>
   </div>
 
   <script>
@@ -745,7 +910,7 @@
         title: "赴威海",
         date: "9.15 周二",
         color: "#1a6b7a",
-        summary: "北京 → 威海 · 约 800km / 8.5h · 住北站附近",
+        summary: "北京 → 威海 · 约 800km / 8.5h · 住花筑·新亨元利别院",
       },
       {
         id: "d2",
@@ -753,7 +918,7 @@
         title: "威海精华",
         date: "9.16 周三",
         color: "#2a8f7b",
-        summary: "猫头山 + 日落湾 + 韩乐坊 · 住韩乐坊附近",
+        summary: "猫头山 + 日落湾 + 韩乐坊 · 续住花筑别院",
       },
       {
         id: "d3",
@@ -777,26 +942,28 @@
         title: "胖东来",
         date: "9.19 周六",
         color: "#c45c3e",
-        summary: "青岛 → 许昌 · 约 750km / 8h",
+        summary: "青岛 → 许昌 · 约 750km / 8h · 住羲荷酒店（天使城）",
       },
     ];
 
     const STOPS = [
       {
         id: "d1-depart", day: "d1", order: 1, time: "06:30",
-        name: "北京出发", type: "行程", city: "北京",
-        desc: "错开早高峰，长途自驾前往威海。",
+        name: "天通苑地铁站出发", type: "行程", city: "北京",
+        desc: "从天通苑地铁站附近出发，错开早高峰，长途自驾前往威海。",
         tip: "准备好水和零食，中途服务区休息即可。",
-        lng: 116.397428, lat: 39.90923,
-        keyword: "天安门", resolved: true, resolvedName: "天安门", skipResolve: true
+        lng: 116.413107, lat: 40.075215,
+        keyword: "天通苑地铁站", altKeyword: "地铁5号线天通苑站",
+        resolved: true, resolvedName: "天通苑(地铁站)"
       },
       {
         id: "d1-hotel", day: "d1", order: 2, time: "15:30",
-        name: "入住 · 威海北站附近", type: "住宿", city: "威海",
-        desc: "智选假日 / 亚朵 / 全季，约 350–500。先歇一会儿。",
-        tip: "海景房尽快订；确认停车。",
-        lng: 122.047161, lat: 37.496677,
-        keyword: "威海北站", resolved: true, resolvedName: "威海北站", lodging: true
+        name: "入住 · 花筑·新亨元利别院", type: "住宿", city: "威海",
+        desc: "威海两晚主住宿。韩乐坊商圈，方便吃夜市、串景点。",
+        tip: "到店先歇一会儿；确认停车与入住时间。",
+        lng: 122.153991, lat: 37.428035,
+        keyword: "花筑·新亨元利别院", altKeyword: "花筑新亨元利别院 威海",
+        lodging: true
       },
       {
         id: "d1-beach", day: "d1", order: 3, time: "17:30",
@@ -841,12 +1008,12 @@
       },
       {
         id: "d2-hotel", day: "d2", order: 4, time: "下午",
-        name: "换住 · 韩乐坊附近", type: "住宿", city: "威海",
-        desc: "铂丽斯 / 希尔维亚，约 400–700。休息或去沙滩。",
-        tip: "韩乐坊停车位紧张，提前确认。",
+        name: "续住 · 花筑·新亨元利别院", type: "住宿", city: "威海",
+        desc: "继续住花筑别院。下午可回酒店歇脚，或顺路去沙滩。",
+        tip: "韩乐坊停车位紧张，尽量错峰回酒店。",
         lng: 122.153991, lat: 37.428035,
-        keyword: "韩乐坊", poiId: "B0FFGC7MCX",
-        resolved: true, resolvedName: "韩乐坊", lodging: true
+        keyword: "花筑·新亨元利别院", altKeyword: "花筑新亨元利别院 威海",
+        lodging: true
       },
       {
         id: "d2-sunset", day: "d2", order: 5, time: "傍晚",
@@ -885,10 +1052,10 @@
       {
         id: "d3-drive", day: "d3", order: 3, time: "13:00",
         name: "出发前往青岛", type: "行程", city: "威海",
-        desc: "约 280km / 3.5h，预计 16:30 抵达。",
+        desc: "从花筑别院出发，约 280km / 3.5h，预计 16:30 抵达。",
         tip: "简餐后上路，别太赶。",
         lng: 122.153991, lat: 37.428035,
-        keyword: "韩乐坊", resolved: true, resolvedName: "韩乐坊"
+        keyword: "花筑·新亨元利别院", altKeyword: "花筑新亨元利别院 威海"
       },
       {
         id: "d3-zhanqiao", day: "d3", order: 4, time: "17:00",
@@ -979,11 +1146,12 @@
       },
       {
         id: "d5-hotel", day: "d5", order: 3, time: "晚上",
-        name: "许昌住宿（可选）", type: "住宿", city: "许昌",
-        desc: "中原国际 / 亚朵，约 300–500。吃烩面、胡辣汤。",
-        tip: "也可当晚继续返程。",
-        lng: 113.8355, lat: 34.022,
-        keyword: "许昌亚朵酒店", resolved: true, resolvedName: "许昌亚朵酒店", lodging: true
+        name: "羲荷酒店（胖东来天使城店）", type: "住宿", city: "许昌",
+        desc: "三里桥街金石国际 7 号楼，隔街就是胖东来天使城。有停车与充电桩。",
+        tip: "买完东西拎回酒店很轻松；想吃烩面、胡辣汤也很方便。",
+        lng: 113.8526, lat: 34.0358,
+        keyword: "羲荷酒店胖东来天使城店", altKeyword: "羲荷酒店 许昌 天使城",
+        lodging: true
       }
     ];
 
@@ -992,9 +1160,12 @@
     let activeDay = "all";
     let selectedId = null;
     const markersById = {};
-    let routeLine = null;
+    const routeOverlays = [];
+    const routeCache = {}; // key: fromId>toId -> { path, distance, time, mid }
+    let routeGen = 0;
     let map = null;
     let drawerSnap = "half"; // peek | half | full
+    let ignoreMapClickUntil = 0;
 
     function isMobile() {
       return window.matchMedia("(max-width: 860px)").matches;
@@ -1080,13 +1251,13 @@
         renderList();
         renderMarkers();
         setDrawerSnap("peek");
-        fitToVisible();
+        fitToVisible(80);
       });
 
-      // 手机默认看「半屏日程 + 地图」，并优先落到 Day1 更贴近出行
+      // 手机默认收起抽屉，先看清行程地图
       if (isMobile()) {
-        activeDay = "d1";
-        setDrawerSnap("half");
+        activeDay = "all";
+        setDrawerSnap("peek");
       }
 
       window.addEventListener("resize", () => {
@@ -1117,17 +1288,44 @@
       el.innerHTML = html;
     }
 
-    function pinHtml(stop, selected) {
+    function pinState(stop) {
+      const selected = selectedId === stop.id;
+      // 只高亮当前点选的那一个；其它天可淡化，但不再整日闪烁
+      const dim = activeDay !== "all" && stop.day !== activeDay && !selected;
+      return { selected, lit: selected, dim };
+    }
+
+    function pinHtml(stop, state) {
+      const st = state && typeof state === "object" ? state : pinState(stop);
+      // 兼容旧调用 pinHtml(stop, true)
+      if (state === true) st.selected = true;
+      if (state === false) st.selected = false;
       const color = dayMap[stop.day].color;
-      const cls = `pin${stop.lodging ? " lodging" : ""}${selected ? " selected" : ""}`;
+      const cls = [
+        "pin",
+        stop.lodging ? "lodging" : "",
+        st.selected ? "selected" : "",
+        st.lit ? "lit" : "",
+        st.dim ? "dim" : "",
+      ].filter(Boolean).join(" ");
       const label = stop.lodging ? "宿" : String(stop.order);
       return `<div class="${cls}" style="background:${color}"><span>${label}</span></div>`;
     }
 
+    function refreshMarkerAppearance() {
+      Object.entries(markersById).forEach(([mid, marker]) => {
+        const s = STOPS.find((x) => x.id === mid);
+        if (!s) return;
+        const st = pinState(s);
+        marker.setContent(pinHtml(s, st));
+        marker.setzIndex(st.selected ? 140 : st.lit ? 120 : st.dim ? 60 : 100);
+      });
+    }
+
     function initMap() {
       map = new AMap.Map("map", {
-        zoom: 7,
-        center: [120.8, 36.9],
+        zoom: 6,
+        center: [119.2, 36.8],
         viewMode: "2D",
         // 与高德官网一致的标准底图（道路彩线、绿地、水域）
         mapStyle: "amap://styles/normal",
@@ -1137,6 +1335,8 @@
       });
 
       map.on("complete", async () => {
+        // 先钉在行程区域，避免加载期飞图
+        forceTripView(119.2, 36.8, 6);
         setMapStatus("<strong>正在用高德校准景点位置…</strong>请稍候");
         try {
           await resolveAllPlaces();
@@ -1145,7 +1345,13 @@
         }
         setMapStatus("");
         renderMarkers();
-        fitToVisible();
+        fitToVisible(isMobile() ? 280 : 80);
+      });
+
+      // 点空白地图关闭详情；图钉点击会短暂屏蔽，避免立刻被关掉
+      map.on("click", () => {
+        if (Date.now() < ignoreMapClickUntil) return;
+        if (selectedId) closeSheet();
       });
 
       const refresh = () => {
@@ -1180,6 +1386,22 @@
 
         function pickBestPoi(pois, stop) {
       if (!pois || !pois.length) return null;
+      if (stop.id === "d1-depart") {
+        const prefer = pois.find((p) => /天通苑/.test(p.name) && /地铁|轨道交通/.test(p.name))
+          || pois.find((p) => /天通苑站/.test(p.name) && !/北|南/.test(p.name))
+          || pois.find((p) => p.name === "天通苑" || /^天通苑\(/.test(p.name));
+        if (prefer) return prefer;
+      }
+      if (stop.id === "d1-hotel" || stop.id === "d2-hotel") {
+        const prefer = pois.find((p) => /花筑.*新亨|新亨元利/.test(p.name))
+          || pois.find((p) => /花筑/.test(p.name) && /威海|韩乐|别院/.test(p.name));
+        if (prefer) return prefer;
+      }
+      if (stop.id === "d5-hotel") {
+        const prefer = pois.find((p) => /羲荷/.test(p.name) && /天使|胖东来/.test(p.name))
+          || pois.find((p) => /羲荷酒店/.test(p.name));
+        if (prefer) return prefer;
+      }
       if (stop.id === "d2-sunset") {
         const prefer = pois.find((p) => /日落湾(沙滩|海水浴场|房车)/.test(p.name))
           || pois.find((p) => /日落湾/.test(p.name) && !/民宿|酒店|俱乐部/.test(p.name));
@@ -1195,7 +1417,7 @@
       }
       const keys = [stop.keyword, stop.altKeyword, stop.name]
         .filter(Boolean)
-        .map((s) => String(s).replace(/[·！!]/g, "").trim());
+        .map((s) => String(s).replace(/[·！!（）()]/g, "").trim());
       for (const key of keys) {
         const hit = pois.find((p) => p.name && (p.name.includes(key) || key.includes(p.name)));
         if (hit) return hit;
@@ -1212,6 +1434,10 @@
       const lng = typeof poi.location.getLng === "function" ? poi.location.getLng() : poi.location.lng;
       const lat = typeof poi.location.getLat === "function" ? poi.location.getLat() : poi.location.lat;
       if (!lng || !lat) return false;
+      if (!isValidChinaLngLat(lng, lat)) {
+        console.warn("POI 坐标异常，已忽略", stop.id, lng, lat, poi.name);
+        return false;
+      }
       stop.lng = Number(lng);
       stop.lat = Number(lat);
       stop.resolvedName = poi.name;
@@ -1282,6 +1508,23 @@
         if (applyPoi(stop, pickBestPoi(pois, { keyword: "日落" }))) return stop;
       }
 
+      // 酒店兜底：按城市关键词再搜一次
+      if (stop.id === "d1-hotel" || stop.id === "d2-hotel") {
+        const pois = await searchOnce(ps, "新亨元利别院", "威海");
+        if (applyPoi(stop, pickBestPoi(pois, stop))) return stop;
+        const pois2 = await searchOnce(ps, "花筑 韩乐坊", "威海");
+        if (applyPoi(stop, pickBestPoi(pois2, stop))) return stop;
+      }
+      if (stop.id === "d5-hotel") {
+        const pois = await searchOnce(ps, "羲荷酒店", "许昌");
+        if (applyPoi(stop, pickBestPoi(pois, stop))) return stop;
+        const pois2 = await searchOnce(ps, "金石国际7号楼", "许昌");
+        if (applyPoi(stop, pickBestPoi(pois2, { keyword: "金石国际" }))) {
+          stop.resolvedName = (stop.resolvedName || "金石国际") + "（羲荷酒店附近）";
+          return stop;
+        }
+      }
+
       return stop;
     }
 
@@ -1311,12 +1554,15 @@
       const el = document.getElementById("dayFilters");
       const mobile = isMobile();
       el.innerHTML = DAYS.map((d) => {
+        // 三列网格里标题宜短，避免「青岛全天」把 D5 挤没
         const title = mobile
           ? (d.id === "all" ? "全览" : d.short)
-          : (d.short === "全部" ? "全览" : d.short + " · " + d.title);
-        const label = mobile ? (d.id === "all" ? "5天" : d.date.replace(/周.*/, "").trim()) : d.date;
+          : (d.id === "all" ? "全览" : `${d.short} ${d.title}`);
+        const label = mobile
+          ? (d.id === "all" ? "5天" : d.date.replace(/周.*/, "").trim())
+          : (d.id === "all" ? d.date : d.date.replace(/周.*/, "").trim());
         return `
-        <button type="button" class="day-btn${activeDay === d.id ? " active" : ""}" data-day="${d.id}" role="tab" aria-selected="${activeDay === d.id}">
+        <button type="button" class="day-btn${activeDay === d.id ? " active" : ""}" data-day="${d.id}" role="tab" aria-selected="${activeDay === d.id}" title="${d.id === "all" ? "全部行程" : `${d.date} · ${d.title}`}">
           <span class="d-label">${label}</span>
           <span class="d-title">${title}</span>
         </button>`;
@@ -1331,7 +1577,8 @@
           renderMarkers();
           updatePeekCopy();
           if (isMobile() && drawerSnap === "peek") setDrawerSnap("half");
-          fitToVisible();
+          // 等抽屉高度稳定后再适配，避免 iPhone 上视野算飞
+          fitToVisible(isMobile() ? 360 : 80);
         });
       });
       updatePeekCopy();
@@ -1344,19 +1591,25 @@
         : [dayMap[activeDay]];
 
       el.innerHTML = daysToShow.map((day) => {
-        const stops = STOPS.filter((s) => s.day === day.id);
+        const stops = STOPS.filter((s) => s.day === day.id).sort((a, b) => a.order - b.order);
         return `
           <section class="list-section" data-day-section="${day.id}">
             <h2><span class="dot" style="background:${day.color}"></span>${day.date} · ${day.title}</h2>
             ${day.summary ? `<p style="font-size:12px;color:var(--ink-soft);margin:-4px 6px 10px;line-height:1.45">${day.summary}</p>` : ""}
-            ${stops.map((s) => `
-              <button type="button" class="stop${selectedId === s.id ? " selected" : ""}" data-id="${s.id}" style="--accent:${day.color}">
+            ${stops.map((s, i) => {
+              const next = stops[i + 1];
+              const leg = next
+                ? `<div class="leg-chip pending" data-leg="${s.id}>${next.id}" data-accent="${day.color}" style="--accent:${day.color}">路线计算中…</div>`
+                : "";
+              return `
+              <button type="button" class="stop${selectedId === s.id ? " selected" : ""}${s.lodging ? " lodging-card" : ""}" data-id="${s.id}" style="--accent:${day.color}">
                 <div class="stop-time">${s.time}</div>
                 <div class="stop-name">${s.name}</div>
                 <div class="stop-desc">${s.desc}</div>
                 <span class="stop-type">${s.type} · ${s.city}</span>
               </button>
-            `).join("")}
+              ${leg}`;
+            }).join("")}
           </section>
         `;
       }).join("");
@@ -1366,61 +1619,416 @@
       });
     }
 
+    function formatDistance(meters) {
+      if (meters == null || Number.isNaN(meters)) return "—";
+      if (meters < 1000) return Math.round(meters) + " 米";
+      const km = meters / 1000;
+      return (km >= 100 ? km.toFixed(0) : km.toFixed(1)) + " 公里";
+    }
+
+    function formatDuration(seconds) {
+      if (seconds == null || Number.isNaN(seconds)) return "—";
+      const s = Math.max(0, Math.round(seconds));
+      if (s < 60) return s + " 秒";
+      const m = Math.round(s / 60);
+      if (m < 60) return m + " 分钟";
+      const h = Math.floor(m / 60);
+      const rem = m % 60;
+      return rem ? `${h} 小时 ${rem} 分` : `${h} 小时`;
+    }
+
+    function routeCacheKey(from, to) {
+      return `${from.id}>${to.id}@${Number(from.lng).toFixed(5)},${Number(from.lat).toFixed(5)}>${Number(to.lng).toFixed(5)},${Number(to.lat).toFixed(5)}`;
+    }
+
+    function loadDriving() {
+      return new Promise((resolve, reject) => {
+        if (window.__driving) return resolve(window.__driving);
+        AMap.plugin(["AMap.Driving"], () => {
+          window.__driving = new AMap.Driving({
+            policy: AMap.DrivingPolicy.LEAST_TIME,
+            ferry: 1,
+          });
+          resolve(window.__driving);
+        });
+        setTimeout(() => {
+          if (!window.__driving) reject(new Error("Driving 加载超时"));
+        }, 8000);
+      });
+    }
+
+    function extractRoutePath(route) {
+      const path = [];
+      (route.steps || []).forEach((step) => {
+        (step.path || []).forEach((p) => path.push(p));
+      });
+      return path;
+    }
+
+    function pathMidpoint(path) {
+      if (!path || !path.length) return null;
+      const mid = path[Math.floor(path.length / 2)];
+      if (typeof mid.getLng === "function") return [mid.getLng(), mid.getLat()];
+      if (Array.isArray(mid)) return mid;
+      return [mid.lng, mid.lat];
+    }
+
+    function approxMeters(from, to) {
+      const x = (from.lng - to.lng) * 85000;
+      const y = (from.lat - to.lat) * 111000;
+      return Math.hypot(x, y);
+    }
+
+    function searchDrivingLeg(driving, from, to) {
+      const key = routeCacheKey(from, to);
+      if (routeCache[key]) return Promise.resolve(routeCache[key]);
+
+      // 坐标几乎重合：跳过算路
+      const distApprox = approxMeters(from, to);
+      if (distApprox < 80) {
+        const tiny = {
+          path: [[from.lng, from.lat], [to.lng, to.lat]],
+          distance: Math.round(distApprox),
+          time: 60,
+          mid: [(from.lng + to.lng) / 2, (from.lat + to.lat) / 2],
+          skip: true,
+        };
+        routeCache[key] = tiny;
+        return Promise.resolve(tiny);
+      }
+
+      return new Promise((resolve) => {
+        driving.search(
+          [from.lng, from.lat],
+          [to.lng, to.lat],
+          (status, result) => {
+            if (status === "complete" && result && result.routes && result.routes[0]) {
+              const route = result.routes[0];
+              const path = extractRoutePath(route);
+              const info = {
+                path: path.length ? path : [[from.lng, from.lat], [to.lng, to.lat]],
+                distance: route.distance,
+                time: route.time,
+                mid: pathMidpoint(path) || [(from.lng + to.lng) / 2, (from.lat + to.lat) / 2],
+              };
+              routeCache[key] = info;
+              resolve(info);
+            } else {
+              // 失败时退回直线，仍给出粗略时长（按 40km/h）
+              const approxM = distApprox;
+              const fallback = {
+                path: [[from.lng, from.lat], [to.lng, to.lat]],
+                distance: Math.round(approxM),
+                time: Math.max(60, Math.round((approxM / 1000 / 40) * 3600)),
+                mid: [(from.lng + to.lng) / 2, (from.lat + to.lat) / 2],
+                fallback: true,
+              };
+              resolve(fallback);
+            }
+          }
+        );
+      });
+    }
+
+    function clearRouteOverlays() {
+      if (!map) return;
+      routeOverlays.forEach((o) => {
+        try { map.remove(o); } catch (_) {}
+      });
+      routeOverlays.length = 0;
+    }
+
+    function addRouteOverlay(from, to, info, color) {
+      if (!map || !info || info.skip) return;
+
+      const line = new AMap.Polyline({
+        path: info.path,
+        strokeColor: color,
+        strokeWeight: info.fallback ? 3 : 5,
+        strokeOpacity: info.fallback ? 0.45 : 0.82,
+        strokeStyle: info.fallback ? "dashed" : "solid",
+        strokeDasharray: info.fallback ? [10, 8] : undefined,
+        lineJoin: "round",
+        lineCap: "round",
+        showDir: !info.fallback,
+        zIndex: 50,
+      });
+      map.add(line);
+      routeOverlays.push(line);
+
+      const labelHtml = `<div class="route-label"><span class="route-label-time">${formatDuration(info.time)}</span><span class="route-label-sep">·</span>${formatDistance(info.distance)}${info.fallback ? "（估）" : ""}</div>`;
+      const label = new AMap.Marker({
+        position: info.mid,
+        content: labelHtml,
+        offset: new AMap.Pixel(-52, -14),
+        zIndex: 70,
+        title: `${from.name} → ${to.name}`,
+      });
+      map.add(label);
+      routeOverlays.push(label);
+    }
+
+    async function drawDrivingRoutes(stopsByDay) {
+      if (!map) return;
+      const gen = ++routeGen;
+      clearRouteOverlays();
+
+      const pairs = [];
+      stopsByDay.forEach(({ day, stops }) => {
+        const ordered = [...stops].sort((a, b) => a.order - b.order);
+        for (let i = 0; i < ordered.length - 1; i++) {
+          pairs.push({ from: ordered[i], to: ordered[i + 1], color: day.color, dayId: day.id });
+        }
+      });
+
+      if (!pairs.length) {
+        refreshLegChips({});
+        return;
+      }
+
+      const hint = document.getElementById("hudHint");
+      if (hint) {
+        hint.style.display = "";
+        hint.innerHTML = `<strong>正在规划驾车路线…</strong>共 ${pairs.length} 段`;
+      }
+
+      let driving;
+      try {
+        driving = await loadDriving();
+      } catch (e) {
+        console.warn(e);
+        if (hint && !selectedId) {
+          hint.innerHTML = `<strong>路线规划不可用</strong>请检查高德 Key 是否开通驾车服务`;
+        }
+        return;
+      }
+
+      const legMap = {};
+      const drawn = [];
+
+      for (const pair of pairs) {
+        if (gen !== routeGen) return; // 用户已切换天数
+        const info = await searchDrivingLeg(driving, pair.from, pair.to);
+        if (gen !== routeGen) return;
+        const key = `${pair.from.id}>${pair.to.id}`;
+        legMap[key] = info;
+        if (!info.skip) {
+          addRouteOverlay(pair.from, pair.to, info, pair.color);
+          drawn.push({ ...pair, info });
+        }
+        refreshLegChips(legMap);
+      }
+
+      if (hint && !selectedId) {
+        const totalSec = drawn.reduce((n, d) => n + (d.info.time || 0), 0);
+        const totalM = drawn.reduce((n, d) => n + (d.info.distance || 0), 0);
+        const scope = activeDay === "all" ? "全程驾车合计" : "当日驾车合计";
+        hint.innerHTML = drawn.length
+          ? `<strong>${scope}</strong>${formatDuration(totalSec)} · ${formatDistance(totalM)}`
+          : `<strong>行程地图</strong>点左侧或图钉查看详情`;
+      }
+
+      // 路线画完后重新适配视野（未选中站点时）
+      if (!selectedId) {
+        setTimeout(() => {
+          if (gen === routeGen) fitToVisible();
+        }, 80);
+      }
+    }
+
+    function refreshLegChips(legMap) {
+      document.querySelectorAll(".leg-chip[data-leg]").forEach((el) => {
+        const key = el.dataset.leg;
+        const info = legMap[key];
+        if (!info) {
+          el.className = "leg-chip pending";
+          el.innerHTML = "路线计算中…";
+          return;
+        }
+        if (info.skip) {
+          el.className = "leg-chip";
+          el.innerHTML = "同点 / 步行即可";
+          return;
+        }
+        el.className = "leg-chip" + (info.fallback ? " fail" : "");
+        el.style.setProperty("--accent", el.dataset.accent || "");
+        el.innerHTML = info.fallback
+          ? `直线估算 · <strong>${formatDuration(info.time)}</strong> · ${formatDistance(info.distance)}`
+          : `驾车 · <strong>${formatDuration(info.time)}</strong> · ${formatDistance(info.distance)}`;
+      });
+    }
+
     function clearMarkers() {
       if (!map) return;
       Object.values(markersById).forEach((m) => map.remove(m));
       Object.keys(markersById).forEach((k) => delete markersById[k]);
-      if (routeLine) {
-        map.remove(routeLine);
-        routeLine = null;
-      }
+      clearRouteOverlays();
+      routeGen++; // 取消进行中的算路
     }
 
     function renderMarkers() {
       if (!map) return;
       clearMarkers();
-      const stops = visibleStops();
+      // 地图始终画全部站点：点日期标签时点亮当天、淡化其它天
+      const stops = STOPS.filter((s) => isValidChinaLngLat(s.lng, s.lat));
 
       stops.forEach((stop) => {
+        const st = pinState(stop);
         const marker = new AMap.Marker({
           position: [stop.lng, stop.lat],
-          content: pinHtml(stop, selectedId === stop.id),
+          content: pinHtml(stop, st),
           offset: new AMap.Pixel(-17, -30),
-          title: stop.name,
-          zIndex: selectedId === stop.id ? 120 : 100,
+          title: `${dayMap[stop.day].short} · ${stop.name}`,
+          zIndex: st.selected ? 140 : st.lit ? 120 : st.dim ? 60 : 100,
         });
-        marker.on("click", () => selectStop(stop.id, { fromMap: true }));
+        marker.on("click", () => {
+          ignoreMapClickUntil = Date.now() + 280;
+          // 点到其它天的淡化图钉时，自动切到那天并点亮
+          if (activeDay !== "all" && stop.day !== activeDay) {
+            activeDay = stop.day;
+            renderDayFilters();
+            renderList();
+            refreshMarkerAppearance();
+            updatePeekCopy();
+          }
+          selectStop(stop.id, { fromMap: true });
+        });
         map.add(marker);
         markersById[stop.id] = marker;
       });
 
-      if (activeDay !== "all" && stops.length > 1) {
-        const path = [...stops]
-          .sort((a, b) => a.order - b.order)
-          .map((s) => [s.lng, s.lat]);
-        routeLine = new AMap.Polyline({
-          path,
-          strokeColor: dayMap[activeDay].color,
-          strokeWeight: 4,
-          strokeOpacity: 0.7,
-          strokeStyle: "dashed",
-          strokeDasharray: [10, 8],
-          lineJoin: "round",
-          zIndex: 50,
-        });
-        map.add(routeLine);
+      const daysToRoute = activeDay === "all"
+        ? DAYS.filter((d) => d.id !== "all")
+        : [dayMap[activeDay]];
+      const stopsByDay = daysToRoute.map((day) => ({
+        day,
+        stops: STOPS.filter((s) => s.day === day.id),
+      })).filter((g) => g.stops.length > 1);
+
+      drawDrivingRoutes(stopsByDay);
+    }
+
+    let fitTimer = null;
+
+    // 本行程大致范围（北京-威海-青岛-许昌），比「全中国」紧很多，避免蒙古/贝加尔湖被当成合法视野
+    function isValidTripLngLat(lng, lat) {
+      const x = Number(lng);
+      const y = Number(lat);
+      return Number.isFinite(x) && Number.isFinite(y) && x >= 110 && x <= 125 && y >= 32 && y <= 42;
+    }
+
+    function isValidChinaLngLat(lng, lat) {
+      // 仍用于 POI 过滤；视野校验请用 isValidTripLngLat / isNearTripCenter
+      const x = Number(lng);
+      const y = Number(lat);
+      return Number.isFinite(x) && Number.isFinite(y) && x >= 73 && x <= 135 && y >= 18 && y <= 54;
+    }
+
+    function stopsBounds(stops) {
+      let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity;
+      stops.forEach((s) => {
+        minLng = Math.min(minLng, Number(s.lng));
+        maxLng = Math.max(maxLng, Number(s.lng));
+        minLat = Math.min(minLat, Number(s.lat));
+        maxLat = Math.max(maxLat, Number(s.lat));
+      });
+      return {
+        minLng, maxLng, minLat, maxLat,
+        centerLng: (minLng + maxLng) / 2,
+        centerLat: (minLat + maxLat) / 2,
+        spanLng: Math.max(0.02, maxLng - minLng),
+        spanLat: Math.max(0.02, maxLat - minLat),
+      };
+    }
+
+    function isNearTripCenter(lng, lat, centerLng, centerLat, spanLng, spanLat) {
+      const maxDist = Math.max(6, spanLng * 2.5, spanLat * 2.5);
+      return Math.abs(Number(lng) - centerLng) <= maxDist && Math.abs(Number(lat) - centerLat) <= maxDist;
+    }
+
+    function zoomForSpan(spanLng, spanLat) {
+      let span = Math.max(spanLng, spanLat * 1.3, 0.02);
+      if (isMobile()) span *= 2.4; // 抽屉挡一大块，多露一圈
+      else span *= 1.2;
+      if (span > 14) return 5;
+      if (span > 9) return 6;
+      if (span > 5) return 7;
+      if (span > 2.8) return 8;
+      if (span > 1.4) return 9;
+      if (span > 0.7) return 10;
+      if (span > 0.35) return 11;
+      if (span > 0.15) return 12;
+      if (span > 0.06) return 13;
+      return 14;
+    }
+
+    function forceTripView(centerLng, centerLat, zoom) {
+      if (!map) return;
+      const lng = isValidTripLngLat(centerLng, centerLat) ? Number(centerLng) : 119.2;
+      const lat = isValidTripLngLat(centerLng, centerLat) ? Number(centerLat) : 36.8;
+      const z = Math.max(4, Math.min(16, zoom == null ? 6 : zoom));
+      try {
+        map.setZoomAndCenter(z, [lng, lat], false);
+      } catch (e) {
+        console.warn(e);
+        try { map.setZoomAndCenter(6, [119.2, 36.8], false); } catch (_) {}
       }
     }
 
-    function fitToVisible() {
+    function centerOnLngLat(lng, lat, zoom) {
       if (!map) return;
-      const markers = Object.values(markersById);
-      if (!markers.length) return;
-      // 手机要避开顶栏和底部抽屉，否则图钉会被挡住
-      const pad = isMobile()
-        ? [90, 24, Math.round(window.innerHeight * (drawerSnap === "full" ? 0.55 : drawerSnap === "half" ? 0.42 : 0.22)), 24]
-        : [48, 48, 48, 48];
-      map.setFitView(markers, false, pad);
+      // 单点也必须在行程带内，否则拉回默认
+      if (!isValidTripLngLat(lng, lat) && !isValidChinaLngLat(lng, lat)) {
+        forceTripView(119.2, 36.8, 6);
+        return;
+      }
+      forceTripView(lng, lat, zoom);
+    }
+
+    function fitToVisible(delayMs) {
+      const wait = typeof delayMs === "number" ? delayMs : (isMobile() ? 220 : 40);
+      clearTimeout(fitTimer);
+      fitTimer = setTimeout(() => doFitToVisible(), wait);
+    }
+
+    function doFitToVisible() {
+      if (!map) return;
+      try { map.resize(); } catch (_) {}
+
+      const stops = visibleStops().filter((s) => isValidChinaLngLat(s.lng, s.lat));
+      if (!stops.length) {
+        forceTripView(119.2, 36.8, 6);
+        return;
+      }
+
+      const b = stopsBounds(stops);
+      // 全程中心大约在山东一带；若算出的中心离谱，用固定中心
+      let { centerLng, centerLat, spanLng, spanLat } = b;
+      if (!isValidTripLngLat(centerLng, centerLat)) {
+        centerLng = 119.2;
+        centerLat = 36.8;
+      }
+
+      const zoom = stops.length === 1
+        ? (isMobile() ? 12 : 13)
+        : zoomForSpan(spanLng, spanLat);
+
+      // 关键禁止 setFitView / setBounds / panBy：iPhone 上会飞到蒙古/欧洲
+      forceTripView(centerLng, centerLat, zoom);
+
+      // 再读一次中心，偏了就强制拉回
+      setTimeout(() => {
+        try {
+          const c = map.getCenter();
+          const lng = c.getLng ? c.getLng() : c.lng;
+          const lat = c.getLat ? c.getLat() : c.lat;
+          if (!isNearTripCenter(lng, lat, centerLng, centerLat, spanLng, spanLat)) {
+            forceTripView(centerLng, centerLat, zoom);
+          }
+        } catch (_) {
+          forceTripView(centerLng, centerLat, zoom);
+        }
+      }, 100);
     }
 
     function selectStop(id, opts = {}) {
@@ -1432,29 +2040,31 @@
         el.classList.toggle("selected", el.dataset.id === id);
       });
 
-      Object.entries(markersById).forEach(([mid, marker]) => {
-        const s = STOPS.find((x) => x.id === mid);
-        if (!s) return;
-        marker.setContent(pinHtml(s, mid === id));
-        marker.setzIndex(mid === id ? 120 : 100);
-      });
+      refreshMarkerAppearance();
 
-      openSheet(stop);
+      // 手机上 d1-depart 详情卡会挡住出发点，不弹 sheet
+      if (isMobile() && stop.id === "d1-depart") {
+        hideSheet();
+      } else {
+        openSheet(stop);
+      }
 
-      if (map) {
+      if (map && isValidChinaLngLat(stop.lng, stop.lat) && (opts.fromList || opts.fromMap)) {
         const zoom = Math.max(map.getZoom(), isMobile() ? 14 : 13);
-        if (opts.fromList || opts.fromMap) {
-          map.setZoomAndCenter(zoom, [stop.lng, stop.lat], true, 400);
+        // 全屏抽屉先收一半，再定位一次，避免重复 pan 把视野带飞
+        if (isMobile() && drawerSnap === "full") {
+          setDrawerSnap("half");
+          setTimeout(() => {
+            if (selectedId === id) centerOnLngLat(stop.lng, stop.lat, zoom);
+          }, 340);
+        } else {
+          setTimeout(() => centerOnLngLat(stop.lng, stop.lat, zoom), isMobile() ? 60 : 0);
         }
       }
 
       const listItem = document.querySelector(`.stop[data-id="${id}"]`);
-      if (listItem && opts.fromMap && !isMobile()) {
+      if (listItem && (opts.fromMap || opts.fromList)) {
         listItem.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      }
-      // 手机点地图图钉：收一点抽屉，让详情卡 + 导航更突出
-      if (isMobile() && opts.fromMap && drawerSnap === "full") {
-        setDrawerSnap("half");
       }
     }
 
@@ -1485,31 +2095,32 @@
       if (hint) hint.style.display = "none";
     }
 
-    function closeSheet() {
+    function hideSheet() {
       document.getElementById("sheet").classList.remove("open");
       const railEl = document.getElementById("rail");
       if (railEl) railEl.classList.remove("sheet-open");
-      selectedId = null;
-      document.querySelectorAll(".stop").forEach((el) => el.classList.remove("selected"));
-      Object.entries(markersById).forEach(([mid, marker]) => {
-        const s = STOPS.find((x) => x.id === mid);
-        if (s) {
-          marker.setContent(pinHtml(s, false));
-          marker.setzIndex(100);
-        }
-      });
       const hint = document.getElementById("hudHint");
       if (hint) hint.style.display = "";
+    }
+
+    function closeSheet() {
+      hideSheet();
+      selectedId = null;
+      document.querySelectorAll(".stop").forEach((el) => el.classList.remove("selected"));
+      refreshMarkerAppearance();
     }
 
     document.getElementById("sheetClose").addEventListener("click", closeSheet);
     document.getElementById("fitBtn").addEventListener("click", fitToVisible);
     document.getElementById("focusBtn").addEventListener("click", () => {
       const stop = STOPS.find((s) => s.id === selectedId);
-      if (stop && map) {
+      if (stop && map && isValidChinaLngLat(stop.lng, stop.lat)) {
         if (isMobile()) setDrawerSnap("peek");
-        map.setZoomAndCenter(15, [stop.lng, stop.lat], true, 400);
+        setTimeout(() => centerOnLngLat(stop.lng, stop.lat, 15), isMobile() ? 320 : 0);
       }
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeSheet();
     });
 
     setupMobileDrawer();
