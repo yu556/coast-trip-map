@@ -561,6 +561,56 @@
     .drawer-grab,
     .desktop-only-spacer { display: none; }
 
+    .btn-icon {
+      flex: 0 0 48px;
+      min-width: 48px;
+      padding: 0;
+      font-size: 22px;
+      line-height: 1;
+    }
+    .sheet-secondary {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .sheet-secondary .btn {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .mobile-bar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .mobile-home {
+      display: none;
+    }
+    .peek-copy { min-width: 0; flex: 1; }
+    .peek-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .peek-nav {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      background: var(--coral);
+      color: #fff;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 10px 16px;
+      min-height: 44px;
+      border-radius: 999px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .peek-nav[hidden] { display: none !important; }
+
     /* —— Mobile：地图优先 + 底部日程抽屉 —— */
     @media (max-width: 860px) {
       .app {
@@ -588,7 +638,7 @@
         left: 0;
         right: 0;
         z-index: 520;
-        padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 10px;
+        padding: calc(10px + env(safe-area-inset-top, 0px)) 12px 10px;
         background: rgba(255, 252, 248, 0.94);
         border-bottom: 1px solid var(--line);
         backdrop-filter: blur(12px);
@@ -602,7 +652,7 @@
       }
       .mobile-bar-title {
         font-family: var(--font-display);
-        font-size: 18px;
+        font-size: 17px;
         font-weight: 700;
         line-height: 1.2;
         white-space: nowrap;
@@ -613,7 +663,11 @@
         font-size: 11px;
         color: var(--ink-soft);
         margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
+      .mobile-home,
       .mobile-fit {
         border: none;
         background: #fff;
@@ -621,7 +675,7 @@
         font-family: inherit;
         font-size: 12px;
         font-weight: 600;
-        padding: 10px 14px;
+        padding: 10px 12px;
         min-height: 40px;
         border-radius: 999px;
         border: 1px solid var(--line);
@@ -629,6 +683,15 @@
         flex-shrink: 0;
         -webkit-tap-highlight-color: transparent;
       }
+      .mobile-home {
+        display: inline-flex;
+        align-items: center;
+        background: rgba(196, 92, 62, 0.1);
+        color: var(--coral);
+        border-color: rgba(196, 92, 62, 0.28);
+      }
+      .mobile-home:active,
+      .mobile-fit:active { transform: scale(0.97); }
 
       .map-wrap {
         position: absolute;
@@ -659,21 +722,23 @@
         border-radius: 22px 22px 0 0;
         background: rgba(255, 252, 248, 0.98);
         box-shadow: 0 -8px 32px rgba(18, 38, 58, 0.14);
-        height: var(--drawer-h, 38dvh);
+        height: var(--drawer-h, 42dvh);
         max-height: calc(92dvh - env(safe-area-inset-top, 0px));
         transition: height 0.28s cubic-bezier(0.22, 1, 0.36, 1);
         padding-bottom: env(safe-area-inset-bottom, 0px);
         overflow: hidden;
         min-height: 0;
       }
-      .rail[data-snap="peek"] { --drawer-h: calc(148px + env(safe-area-inset-bottom, 0px)); }
-      .rail[data-snap="half"] { --drawer-h: 38dvh; }
+      /* 手机只保留两档：看地图 / 看行程，减少决策成本 */
+      .rail[data-snap="peek"] { --drawer-h: calc(132px + env(safe-area-inset-bottom, 0px)); }
+      .rail[data-snap="half"],
+      .rail[data-snap="full"] { --drawer-h: calc(62dvh - env(safe-area-inset-top, 0px) * 0.2); }
       .rail[data-snap="full"] { --drawer-h: calc(88dvh - env(safe-area-inset-top, 0px)); }
 
       .drawer-grab {
         display: block;
         flex-shrink: 0;
-        padding: 8px 16px 6px;
+        padding: 8px 14px 8px;
         touch-action: none;
         cursor: grab;
         user-select: none;
@@ -689,12 +754,15 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 12px;
+        gap: 10px;
       }
       .peek-title {
         font-size: 15px;
         font-weight: 700;
         color: var(--ink);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .peek-sub {
         font-size: 12px;
@@ -705,6 +773,7 @@
         -webkit-box-orient: vertical;
         overflow: hidden;
       }
+      .peek-nav { display: inline-flex; }
       .peek-toggle {
         border: none;
         background: rgba(26, 107, 122, 0.1);
@@ -713,60 +782,77 @@
         font-size: 12px;
         font-weight: 600;
         padding: 10px 14px;
-        min-height: 40px;
+        min-height: 44px;
         border-radius: 999px;
         flex-shrink: 0;
         -webkit-tap-highlight-color: transparent;
       }
 
-      .brand {
-        display: none;
-      }
+      .brand { display: none; }
 
+      /* 日期：横滑大拇指芯片，不再挤成 3×2 小格 */
       .days {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        padding: 4px 12px 10px;
+        display: flex;
+        grid-template-columns: none;
+        overflow-x: auto;
+        overflow-y: hidden;
+        gap: 8px;
+        padding: 4px 14px 12px;
         border-bottom: 1px solid var(--line);
-        gap: 6px;
         flex-shrink: 0;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
       }
+      .days::-webkit-scrollbar { display: none; }
       .day-btn {
-        min-width: 0;
-        width: 100%;
-        padding: 8px 8px;
-        border-radius: 12px;
+        flex: 0 0 auto;
+        width: auto;
+        min-width: 72px;
+        padding: 10px 14px;
+        border-radius: 14px;
+        scroll-snap-align: start;
         -webkit-tap-highlight-color: transparent;
       }
       .day-btn .d-label { font-size: 10px; }
-      .day-btn .d-title { font-size: 12px; }
+      .day-btn .d-title { font-size: 13px; }
+      .day-btn.active {
+        box-shadow: 0 4px 14px rgba(15, 76, 89, 0.28);
+      }
 
       .list {
-        padding: 10px 12px calc(18px + env(safe-area-inset-bottom, 0px));
+        padding: 10px 12px calc(20px + env(safe-area-inset-bottom, 0px));
         -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
       }
       .stop {
-        padding: 12px 12px 12px 14px;
-        border-radius: 14px;
-        margin-bottom: 6px;
+        padding: 14px 14px 14px 16px;
+        border-radius: 16px;
+        margin-bottom: 8px;
         -webkit-tap-highlight-color: transparent;
         box-shadow: none;
+        min-height: 72px;
       }
       .stop:hover { transform: none; box-shadow: none; }
-      .stop-name { font-size: 14px; }
+      .stop:active { background: var(--foam); }
+      .stop-name { font-size: 15px; }
       .stop-desc {
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
       }
+      .stop.lodging-card {
+        border-color: rgba(196, 92, 62, 0.22);
+        background: linear-gradient(135deg, #fff 0%, rgba(196, 92, 62, 0.06) 100%);
+      }
       .list-section h2 { margin: 4px 4px 8px; font-size: 11px; }
 
-      /* 手机：详情卡从底部升起，贴在抽屉上方 */
+      /* 详情卡：贴底拇指区，导航最大 */
       .sheet {
         left: 10px;
         right: 10px;
-        bottom: calc(var(--drawer-h, 38dvh) + 8px);
+        bottom: calc(var(--drawer-h, 42dvh) + 8px);
         width: auto;
         max-width: none;
         padding: 14px 14px 12px;
@@ -774,14 +860,26 @@
         z-index: 560;
         transform: translateY(24px);
       }
-      .sheet.open {
-        transform: translateY(0);
-      }
+      .sheet.open { transform: translateY(0); }
       .sheet h3 { font-size: 18px; }
-      .sheet-actions { flex-wrap: nowrap; margin-top: 12px; }
+      .sheet-body {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        font-size: 13px;
+      }
+      .sheet-actions {
+        flex-wrap: nowrap;
+        margin-top: 12px;
+        align-items: stretch;
+      }
+      .sheet-secondary {
+        display: flex;
+      }
       .sheet-close {
-        width: 40px;
-        height: 40px;
+        width: 44px;
+        height: 44px;
         border-radius: 12px;
         font-size: 20px;
       }
@@ -790,13 +888,26 @@
         font-size: 14px;
         padding: 12px 14px;
       }
-      .btn-primary { flex: 1.4; }
-      .btn-ghost { flex: 0.8; min-width: 0; padding: 12px 10px; }
+      .btn-primary {
+        flex: 1;
+        min-width: 0;
+        font-size: 15px;
+      }
+      .btn-ghost { min-width: 0; padding: 12px 10px; }
+      .btn-icon {
+        background: rgba(18, 38, 58, 0.06);
+        color: var(--ink);
+      }
+      .btn-icon:disabled {
+        opacity: 0.35;
+        pointer-events: none;
+      }
 
+      .rail[data-snap="peek"] .days,
       .rail[data-snap="peek"] .list { visibility: hidden; pointer-events: none; }
       .rail[data-snap="peek"] .list-section { display: none; }
       .rail.sheet-open[data-snap="peek"] {
-        --drawer-h: calc(120px + env(safe-area-inset-bottom, 0px));
+        --drawer-h: calc(118px + env(safe-area-inset-bottom, 0px));
       }
     }
 
@@ -830,22 +941,28 @@
   <div class="app" id="app">
     <header class="mobile-bar" id="mobileBar">
       <div class="mobile-bar-text">
-        <div class="mobile-bar-kicker">COAST TRIP</div>
+        <div class="mobile-bar-kicker" id="mobileKicker">COAST TRIP</div>
         <div class="mobile-bar-title">我们的海边之旅</div>
-        <div class="mobile-bar-meta">9.15–9.19 · 自驾 · 点地图可导航</div>
+        <div class="mobile-bar-meta" id="mobileMeta">9.15–9.19 · 自驾 · 点地图可导航</div>
       </div>
-      <button type="button" class="mobile-fit" id="mobileFitBtn">全览</button>
+      <div class="mobile-bar-actions">
+        <button type="button" class="mobile-home" id="mobileHomeBtn" title="导航回今晚酒店">回酒店</button>
+        <button type="button" class="mobile-fit" id="mobileFitBtn">全览</button>
+      </div>
     </header>
 
     <aside class="rail" id="rail" data-snap="half">
       <div class="drawer-grab" id="drawerGrab" aria-label="拖动调整日程面板">
         <div class="grab-bar"></div>
         <div class="peek-row">
-          <div>
+          <div class="peek-copy">
             <div class="peek-title" id="peekTitle">行程日程</div>
             <div class="peek-sub" id="peekSub">上滑展开 · 下滑收起</div>
           </div>
-          <button type="button" class="peek-toggle" id="peekToggle">展开</button>
+          <div class="peek-actions">
+            <a class="peek-nav" id="peekNavBtn" href="#" target="_blank" rel="noopener" hidden>导航</a>
+            <button type="button" class="peek-toggle" id="peekToggle">展开</button>
+          </div>
         </div>
       </div>
 
@@ -856,7 +973,7 @@
         <div class="brand-meta">
           <span class="chip">9.15 — 9.19</span>
           <span class="chip">自驾 · 5 天</span>
-          <span class="chip">高德官方地图</span>
+          <span class="chip">青岛 · 贝叶酒店（尚嘉中心）</span>
         </div>
       </header>
 
@@ -884,8 +1001,13 @@
         </div>
         <div class="sheet-body" id="sheetBody"></div>
         <div class="sheet-actions">
+          <button type="button" class="btn btn-ghost btn-icon" id="prevStopBtn" aria-label="上一站">‹</button>
           <a class="btn btn-primary" id="navBtn" href="#" target="_blank" rel="noopener">高德导航</a>
+          <button type="button" class="btn btn-ghost btn-icon" id="nextStopBtn" aria-label="下一站">›</button>
+        </div>
+        <div class="sheet-secondary">
           <button type="button" class="btn btn-ghost" id="focusBtn">看地图</button>
+          <button type="button" class="btn btn-ghost" id="homeFromSheetBtn">回酒店</button>
         </div>
       </div>
     </main>
@@ -926,7 +1048,7 @@
         title: "赴青岛",
         date: "9.17 周四",
         color: "#3d7ea6",
-        summary: "古陌早市 → 青岛 · 约 280km / 3.5h",
+        summary: "古陌早市 → 市南看海 → 黄岛贝叶酒店 · 约 280km / 3.5h · 连住 2 晚",
       },
       {
         id: "d4",
@@ -934,7 +1056,7 @@
         title: "青岛全天",
         date: "9.18 周五",
         color: "#5a6fa8",
-        summary: "八大关 · 小麦岛 · 奥帆 · 五四广场",
+        summary: "黄岛出发过隧道 · 八大关 · 小麦岛 · 奥帆 · 续住贝叶酒店",
       },
       {
         id: "d5",
@@ -942,7 +1064,7 @@
         title: "胖东来",
         date: "9.19 周六",
         color: "#c45c3e",
-        summary: "青岛 → 许昌 · 约 750km / 8h · 住羲荷酒店（天使城）",
+        summary: "贝叶酒店出发 → 许昌 · 约 750km / 8h · 住羲荷酒店（天使城）",
       },
     ];
 
@@ -1052,8 +1174,8 @@
       {
         id: "d3-drive", day: "d3", order: 3, time: "13:00",
         name: "出发前往青岛", type: "行程", city: "威海",
-        desc: "从花筑别院出发，约 280km / 3.5h，预计 16:30 抵达。",
-        tip: "简餐后上路，别太赶。",
+        desc: "从花筑别院出发，约 280km / 3.5h。先市南看海吃海鲜，晚间回黄岛入住。",
+        tip: "简餐后上路，别太赶；过胶州湾隧道记得备好 ETC。",
         lng: 122.153991, lat: 37.428035,
         keyword: "花筑·新亨元利别院", altKeyword: "花筑新亨元利别院 威海"
       },
@@ -1069,25 +1191,25 @@
       {
         id: "d3-beer", day: "d3", order: 5, time: "晚上",
         name: "啤酒街 / 台东", type: "美食", city: "青岛",
-        desc: "辣炒蛤蜊、原浆啤酒。住青岛（连住 2 晚）。",
-        tip: "酒店建议汇泉王朝 / 栈桥王子，海景房优先。",
+        desc: "辣炒蛤蜊、原浆啤酒。吃完经胶州湾隧道回黄岛酒店。",
+        tip: "台东 → 黄岛贝叶酒店约 35–45 分钟，别喝太多原浆再开车。",
         lng: 120.350832, lat: 36.08036,
         keyword: "营口路啤酒街", resolved: true, resolvedName: "青岛啤酒街"
       },
       {
         id: "d3-hotel", day: "d3", order: 6, time: "入住",
-        name: "青岛酒店（汇泉湾一带）", type: "住宿", city: "青岛",
-        desc: "汇泉王朝 / 栈桥王子，约 500–1000。停车紧张，提前确认。",
-        tip: "海景房尽快订。",
-        lng: 120.341325, lat: 36.057428,
-        keyword: "青岛第一海水浴场", poiId: "B0214019F9",
-        resolved: true, resolvedName: "青岛第一海水浴场", lodging: true
+        name: "入住 · 贝叶酒店（尚嘉中心）", type: "住宿", city: "青岛",
+        desc: "已订。黄岛区珠江路 31 号尚嘉中心 A1 栋。金沙滩商圈，连住 2 晚（9.17–9.19）。",
+        tip: "导航搜「贝叶酒店」或「尚嘉中心」；到店确认停车位。市南景点需过隧道，预留 40 分钟。",
+        lng: 120.1912, lat: 35.9586,
+        keyword: "贝叶酒店", altKeyword: "贝叶PATTRA酒店 尚嘉中心 珠江路",
+        lodging: true, homeBase: true
       },
       {
         id: "d4-badaguan", day: "d4", order: 1, time: "上午",
         name: "八大关", type: "散步", city: "青岛",
-        desc: "睡到自然醒，看老别墅。",
-        tip: "早上光线最好，适合慢慢走。",
+        desc: "从黄岛过隧道到市南，睡到自然醒后看老别墅。",
+        tip: "酒店 → 八大关约 40 分钟；早上光线最好，适合慢慢走。",
         lng: 120.350903, lat: 36.053625,
         keyword: "八大关风景区", poiId: "B0214024B4",
         resolved: true, resolvedName: "八大关风景区"
@@ -1122,18 +1244,27 @@
         id: "d4-aofan", day: "d4", order: 5, time: "傍晚",
         name: "五四广场（奥帆中心旁）", type: "海边", city: "青岛",
         desc: "看海景，晚上再来一杯原浆或找海景餐厅。",
-        tip: "日落前后人气最高。",
+        tip: "日落前后人气最高；回黄岛走隧道，晚上别堵在桥上。",
         lng: 120.384576, lat: 36.06274,
         keyword: "五四广场", poiId: "B021402991",
         resolved: true, resolvedName: "五四广场"
       },
       {
+        id: "d4-hotel", day: "d4", order: 6, time: "晚上",
+        name: "续住 · 贝叶酒店（尚嘉中心）", type: "住宿", city: "青岛",
+        desc: "回黄岛珠江路 31 号尚嘉中心 A1 栋。市南玩完过隧道约 35–45 分钟。",
+        tip: "明天一早从酒店出发去许昌，今晚早点睡、油加满。",
+        lng: 120.1912, lat: 35.9586,
+        keyword: "贝叶酒店", altKeyword: "贝叶PATTRA酒店 尚嘉中心 珠江路",
+        lodging: true, homeBase: true
+      },
+      {
         id: "d5-depart", day: "d5", order: 1, time: "07:00",
-        name: "青岛出发", type: "行程", city: "青岛",
-        desc: "奔赴许昌，约 750km / 8h，下午 3 点左右到。",
-        tip: "唯一要早起的一天。",
-        lng: 120.341325, lat: 36.057428,
-        keyword: "青岛第一海水浴场", resolved: true, resolvedName: "青岛第一海水浴场"
+        name: "贝叶酒店出发", type: "行程", city: "青岛",
+        desc: "从黄岛尚嘉中心出发奔赴许昌，约 750km / 8h，下午 3 点左右到。",
+        tip: "唯一要早起的一天；出城先走高速，少绕市区。",
+        lng: 120.1912, lat: 35.9586,
+        keyword: "贝叶酒店", altKeyword: "贝叶PATTRA酒店 尚嘉中心"
       },
       {
         id: "d5-pdl", day: "d5", order: 2, time: "15:00",
@@ -1167,25 +1298,158 @@
     let drawerSnap = "half"; // peek | half | full
     let ignoreMapClickUntil = 0;
 
+    /** 行程日历：用于「今天 / 距出发」文案（本地时区） */
+    const TRIP_DATES = {
+      d1: "2026-09-15",
+      d2: "2026-09-16",
+      d3: "2026-09-17",
+      d4: "2026-09-18",
+      d5: "2026-09-19",
+    };
+
     function isMobile() {
       return window.matchMedia("(max-width: 860px)").matches;
     }
 
+    function todayKey() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, "0");
+      const d = String(now.getDate()).padStart(2, "0");
+      const iso = `${y}-${m}-${d}`;
+      return Object.keys(TRIP_DATES).find((k) => TRIP_DATES[k] === iso) || null;
+    }
+
+    function daysUntilTrip() {
+      const start = new Date(2026, 8, 15); // month 0-indexed
+      const now = new Date();
+      const a = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      return Math.round((start - a) / 86400000);
+    }
+
+    /** 当前情境下的「今晚/本段」酒店：青岛段优先贝叶 */
+    function getHomeHotel(dayId) {
+      const day = dayId && dayId !== "all" ? dayId : (selectedId
+        ? (STOPS.find((s) => s.id === selectedId) || {}).day
+        : (todayKey() || activeDay));
+      const scope = day && day !== "all" ? day : null;
+      if (scope === "d3" || scope === "d4" || scope === "d5") {
+        return STOPS.find((s) => s.id === "d3-hotel") || STOPS.find((s) => s.homeBase);
+      }
+      if (scope === "d1" || scope === "d2") {
+        return STOPS.find((s) => s.id === "d1-hotel");
+      }
+      // 全览：已订青岛酒店优先展示
+      return STOPS.find((s) => s.id === "d3-hotel") || STOPS.find((s) => s.lodging);
+    }
+
+    function navHrefFor(stop) {
+      if (!stop) return "#";
+      if (stop.resolved) return amapNavUrl(stop);
+      const kw = encodeURIComponent(stop.keyword || stop.name);
+      const city = encodeURIComponent(stop.city || "");
+      return `https://uri.amap.com/search?keyword=${kw}&city=${city}&callnative=1&src=coast-trip`;
+    }
+
+    function goHomeHotel() {
+      const scope = activeDay !== "all" ? activeDay : (todayKey() || "d3");
+      let hotel = null;
+      if (scope === "d1" || scope === "d2") {
+        hotel = STOPS.find((s) => s.id === "d1-hotel");
+      } else if (scope === "d4") {
+        hotel = STOPS.find((s) => s.id === "d4-hotel");
+      } else if (scope === "d5") {
+        hotel = STOPS.find((s) => s.id === "d5-depart"); // 同坐标，留在 D5
+      } else {
+        hotel = STOPS.find((s) => s.id === "d3-hotel");
+      }
+      if (!hotel) return;
+
+      if (activeDay !== "all" && hotel.day !== activeDay) {
+        activeDay = hotel.day;
+        renderDayFilters();
+        renderList();
+        renderMarkers();
+      }
+      selectStop(hotel.id, { fromList: true });
+    }
+
+    function orderedStopsForNav() {
+      const pool = activeDay === "all"
+        ? STOPS.slice().sort((a, b) => {
+            const da = DAYS.findIndex((d) => d.id === a.day);
+            const db = DAYS.findIndex((d) => d.id === b.day);
+            return da === db ? a.order - b.order : da - db;
+          })
+        : STOPS.filter((s) => s.day === activeDay).sort((a, b) => a.order - b.order);
+      return pool;
+    }
+
+    function stepStop(dir) {
+      const pool = orderedStopsForNav();
+      if (!pool.length) return;
+      const idx = pool.findIndex((s) => s.id === selectedId);
+      const next = idx < 0 ? pool[0] : pool[idx + dir];
+      if (!next) return;
+      if (activeDay !== "all" && next.day !== activeDay) {
+        activeDay = next.day;
+        renderDayFilters();
+        renderList();
+        renderMarkers();
+      }
+      selectStop(next.id, { fromList: true });
+    }
+
+    function updateMobileChrome() {
+      const meta = document.getElementById("mobileMeta");
+      const kicker = document.getElementById("mobileKicker");
+      const homeBtn = document.getElementById("mobileHomeBtn");
+      const hotel = getHomeHotel(activeDay);
+      const tk = todayKey();
+      const left = daysUntilTrip();
+
+      if (kicker) {
+        if (tk) kicker.textContent = `今天 · ${dayMap[tk].short}`;
+        else if (left > 0) kicker.textContent = `还有 ${left} 天出发`;
+        else if (left === 0) kicker.textContent = "今天出发";
+        else kicker.textContent = "行程进行中";
+      }
+      if (meta) {
+        if (hotel) {
+          meta.textContent = activeDay === "d1" || activeDay === "d2"
+            ? "住 · 花筑别院（威海）"
+            : activeDay === "d3" || activeDay === "d4" || activeDay === "d5"
+              ? "住 · 贝叶酒店 · 黄岛尚嘉中心"
+              : "青岛住贝叶酒店 · 点「回酒店」一键导航";
+        } else {
+          meta.textContent = "9.15–9.19 · 自驾 · 点地图可导航";
+        }
+      }
+      if (homeBtn && hotel) {
+        homeBtn.hidden = false;
+        homeBtn.textContent = hotel.id.startsWith("d1") || hotel.id.startsWith("d2") ? "回威海酒店" : "回酒店";
+      }
+    }
+
     function setDrawerSnap(snap) {
+      // 手机端把 half 与 full 收敛：half=展开行程，full=几乎全屏列表
       drawerSnap = snap;
       const rail = document.getElementById("rail");
       if (!rail) return;
       rail.dataset.snap = snap;
       const toggle = document.getElementById("peekToggle");
       if (toggle) {
-        toggle.textContent = snap === "full" ? "收起" : snap === "peek" ? "展开" : "更大";
+        if (isMobile()) {
+          toggle.textContent = snap === "peek" ? "行程" : "收起";
+        } else {
+          toggle.textContent = snap === "full" ? "收起" : snap === "peek" ? "展开" : "更大";
+        }
       }
       updatePeekCopy();
-      // 抽屉高度变化后刷新地图可视区
       setTimeout(() => {
         if (!map) return;
         map.resize();
-        fitToVisible();
+        if (!selectedId) fitToVisible();
       }, 300);
     }
 
@@ -1194,24 +1458,45 @@
       const count = visibleStops().length;
       const title = document.getElementById("peekTitle");
       const sub = document.getElementById("peekSub");
+      const peekNav = document.getElementById("peekNavBtn");
       if (!title || !sub) return;
-      if (activeDay === "all") {
+
+      const selected = selectedId ? STOPS.find((s) => s.id === selectedId) : null;
+      if (selected) {
+        title.textContent = selected.name;
+        sub.textContent = `${dayMap[selected.day].short} · ${selected.time} · ${selected.type}`;
+        if (peekNav) {
+          peekNav.hidden = false;
+          peekNav.href = navHrefFor(selected);
+          peekNav.textContent = selected.lodging ? "导航回酒店" : "导航";
+        }
+      } else if (activeDay === "all") {
         title.textContent = `全部行程 · ${count} 站`;
-        sub.textContent = drawerSnap === "peek" ? "上滑查看日程" : "点地点可导航到高德";
+        sub.textContent = drawerSnap === "peek" ? "上滑查看日程 · 右上角可回酒店" : "点地点可导航到高德";
+        if (peekNav) peekNav.hidden = true;
       } else {
         title.textContent = `${day.short} ${day.title} · ${count} 站`;
         sub.textContent = day.date + (day.summary ? " · " + day.summary.split("·")[0].trim() : "");
+        if (peekNav) peekNav.hidden = true;
       }
+      updateMobileChrome();
     }
 
     function setupMobileDrawer() {
       const grab = document.getElementById("drawerGrab");
       const toggle = document.getElementById("peekToggle");
       const mobileFit = document.getElementById("mobileFitBtn");
+      const mobileHome = document.getElementById("mobileHomeBtn");
       if (!grab) return;
 
       const order = ["peek", "half", "full"];
       const cycle = (dir) => {
+        if (isMobile()) {
+          // 两档：peek ↔ half（展开）
+          if (dir > 0) setDrawerSnap(drawerSnap === "peek" ? "half" : "full");
+          else setDrawerSnap(drawerSnap === "full" ? "half" : "peek");
+          return;
+        }
         const i = order.indexOf(drawerSnap);
         const next = order[Math.max(0, Math.min(order.length - 1, i + dir))];
         setDrawerSnap(next);
@@ -1219,28 +1504,45 @@
 
       toggle && toggle.addEventListener("click", (e) => {
         e.stopPropagation();
+        if (isMobile()) {
+          if (drawerSnap === "peek") {
+            closeSheet();
+            setDrawerSnap("half");
+          } else {
+            setDrawerSnap("peek");
+          }
+          return;
+        }
         if (drawerSnap === "full") setDrawerSnap("half");
         else if (drawerSnap === "half") setDrawerSnap("full");
         else setDrawerSnap("half");
       });
 
-      grab.addEventListener("click", () => {
+      grab.addEventListener("click", (e) => {
+        if (e.target.closest(".peek-nav, .peek-toggle")) return;
+        if (isMobile()) {
+          if (drawerSnap === "peek") {
+            closeSheet();
+            setDrawerSnap("half");
+          } else {
+            setDrawerSnap("peek");
+          }
+          return;
+        }
         if (drawerSnap === "peek") setDrawerSnap("half");
         else if (drawerSnap === "half") setDrawerSnap("full");
         else setDrawerSnap("half");
       });
 
       let startY = 0;
-      let startSnap = "half";
       grab.addEventListener("touchstart", (e) => {
         startY = e.touches[0].clientY;
-        startSnap = drawerSnap;
       }, { passive: true });
       grab.addEventListener("touchend", (e) => {
         const dy = e.changedTouches[0].clientY - startY;
         if (Math.abs(dy) < 28) return;
-        if (dy < 0) cycle(1); // 上滑放大
-        else cycle(-1); // 下滑缩小
+        if (dy < 0) cycle(1);
+        else cycle(-1);
       }, { passive: true });
 
       mobileFit && mobileFit.addEventListener("click", () => {
@@ -1254,10 +1556,14 @@
         fitToVisible(80);
       });
 
-      // 手机默认收起抽屉，先看清行程地图
+      mobileHome && mobileHome.addEventListener("click", () => {
+        goHomeHotel();
+      });
+
       if (isMobile()) {
-        activeDay = "all";
-        setDrawerSnap("peek");
+        const tk = todayKey();
+        activeDay = tk || "all";
+        setDrawerSnap(tk ? "half" : "peek");
       }
 
       window.addEventListener("resize", () => {
@@ -1402,6 +1708,12 @@
           || pois.find((p) => /羲荷酒店/.test(p.name));
         if (prefer) return prefer;
       }
+      if (stop.id === "d3-hotel" || stop.id === "d4-hotel" || stop.id === "d5-depart") {
+        const prefer = pois.find((p) => /贝叶/.test(p.name) && /酒店|PATTRA|pattra/i.test(p.name))
+          || pois.find((p) => /贝叶/.test(p.name))
+          || pois.find((p) => /尚嘉中心/.test(p.name) && /珠江/.test(p.address || p.name || ""));
+        if (prefer) return prefer;
+      }
       if (stop.id === "d2-sunset") {
         const prefer = pois.find((p) => /日落湾(沙滩|海水浴场|房车)/.test(p.name))
           || pois.find((p) => /日落湾/.test(p.name) && !/民宿|酒店|俱乐部/.test(p.name));
@@ -1524,6 +1836,18 @@
           return stop;
         }
       }
+      if (stop.id === "d3-hotel" || stop.id === "d4-hotel" || stop.id === "d5-depart") {
+        const tries = [
+          ["贝叶酒店", "青岛"],
+          ["贝叶PATTRA酒店", "青岛"],
+          ["尚嘉中心 A1", "青岛"],
+          ["珠江路31号", "青岛"],
+        ];
+        for (const [kw, city] of tries) {
+          const pois = await searchOnce(ps, kw, city);
+          if (applyPoi(stop, pickBestPoi(pois, stop))) return stop;
+        }
+      }
 
       return stop;
     }
@@ -1533,6 +1857,18 @@
       // 串行更稳，避免并发限流
       for (const stop of STOPS) {
         await resolveOnePlace(ps, stop);
+      }
+      // 贝叶酒店坐标同步到续住 / 出发点
+      const baye = STOPS.find((s) => s.id === "d3-hotel");
+      if (baye && baye.resolved) {
+        ["d4-hotel", "d5-depart"].forEach((id) => {
+          const s = STOPS.find((x) => x.id === id);
+          if (!s) return;
+          s.lng = baye.lng;
+          s.lat = baye.lat;
+          s.resolved = true;
+          s.resolvedName = baye.resolvedName;
+        });
       }
       console.log(
         "POI校准完成",
@@ -1554,7 +1890,6 @@
       const el = document.getElementById("dayFilters");
       const mobile = isMobile();
       el.innerHTML = DAYS.map((d) => {
-        // 三列网格里标题宜短，避免「青岛全天」把 D5 挤没
         const title = mobile
           ? (d.id === "all" ? "全览" : d.short)
           : (d.id === "all" ? "全览" : `${d.short} ${d.title}`);
@@ -1577,11 +1912,20 @@
           renderMarkers();
           updatePeekCopy();
           if (isMobile() && drawerSnap === "peek") setDrawerSnap("half");
-          // 等抽屉高度稳定后再适配，避免 iPhone 上视野算飞
+          // 横滑日期时把选中项滚进视野
+          if (isMobile()) {
+            btn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+          }
           fitToVisible(isMobile() ? 360 : 80);
         });
       });
       updatePeekCopy();
+      if (isMobile()) {
+        const activeBtn = el.querySelector(".day-btn.active");
+        if (activeBtn) {
+          setTimeout(() => activeBtn.scrollIntoView({ inline: "center", block: "nearest" }), 40);
+        }
+      }
     }
 
     function renderList() {
@@ -1603,10 +1947,10 @@
                 : "";
               return `
               <button type="button" class="stop${selectedId === s.id ? " selected" : ""}${s.lodging ? " lodging-card" : ""}" data-id="${s.id}" style="--accent:${day.color}">
-                <div class="stop-time">${s.time}</div>
+                <div class="stop-time">${s.time}${s.lodging ? " · 已订" : ""}</div>
                 <div class="stop-name">${s.name}</div>
                 <div class="stop-desc">${s.desc}</div>
-                <span class="stop-type">${s.type} · ${s.city}</span>
+                <span class="stop-type">${s.type} · ${s.city}${s.homeBase ? " · 回酒店入口" : ""}</span>
               </button>
               ${leg}`;
             }).join("")}
@@ -2042,30 +2386,39 @@
 
       refreshMarkerAppearance();
 
-      // 手机上 d1-depart 详情卡会挡住出发点，不弹 sheet
-      if (isMobile() && stop.id === "d1-depart") {
-        hideSheet();
+      // 手机：选中即收起列表，把拇指区留给「导航 / 上下站」
+      if (isMobile()) {
+        if (stop.id === "d1-depart") {
+          hideSheet();
+        } else {
+          openSheet(stop);
+          setDrawerSnap("peek");
+        }
       } else {
         openSheet(stop);
       }
 
       if (map && isValidChinaLngLat(stop.lng, stop.lat) && (opts.fromList || opts.fromMap)) {
         const zoom = Math.max(map.getZoom(), isMobile() ? 14 : 13);
-        // 全屏抽屉先收一半，再定位一次，避免重复 pan 把视野带飞
-        if (isMobile() && drawerSnap === "full") {
-          setDrawerSnap("half");
-          setTimeout(() => {
-            if (selectedId === id) centerOnLngLat(stop.lng, stop.lat, zoom);
-          }, 340);
-        } else {
-          setTimeout(() => centerOnLngLat(stop.lng, stop.lat, zoom), isMobile() ? 60 : 0);
-        }
+        setTimeout(() => centerOnLngLat(stop.lng, stop.lat, zoom), isMobile() ? 320 : 0);
       }
 
       const listItem = document.querySelector(`.stop[data-id="${id}"]`);
-      if (listItem && (opts.fromMap || opts.fromList)) {
+      if (listItem && (opts.fromMap || opts.fromList) && !isMobile()) {
         listItem.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
+
+      updateStepButtons();
+      updatePeekCopy();
+    }
+
+    function updateStepButtons() {
+      const pool = orderedStopsForNav();
+      const idx = pool.findIndex((s) => s.id === selectedId);
+      const prev = document.getElementById("prevStopBtn");
+      const next = document.getElementById("nextStopBtn");
+      if (prev) prev.disabled = idx <= 0;
+      if (next) next.disabled = idx < 0 || idx >= pool.length - 1;
     }
 
     function openSheet(stop) {
@@ -2074,25 +2427,24 @@
       document.getElementById("sheetDay").textContent = `${day.date} · ${day.title} · ${stop.time}`;
       document.getElementById("sheetDay").style.color = day.color;
       document.getElementById("sheetTitle").textContent = stop.name;
+      const lodgingHint = stop.lodging
+        ? `<p style="margin-top:8px"><strong style="color:var(--coral)">已订住宿</strong> · ${stop.desc}</p>`
+        : `<p>${stop.desc}</p>`;
       document.getElementById("sheetBody").innerHTML = `
-        <p>${stop.desc}</p>
+        ${lodgingHint}
         ${stop.tip ? `<p style="margin-top:8px"><strong style="color:var(--ink)">小贴士</strong> · ${stop.tip}</p>` : ""}
-        ${stop.resolvedName ? `<p style="margin-top:8px;font-size:12px;color:var(--ink-soft)">高德定位：${stop.resolvedName}<br/>${stop.lng.toFixed(6)}, ${stop.lat.toFixed(6)}</p>` : `<p style="margin-top:8px;font-size:12px;color:var(--coral)">该点暂未校准到高德 POI，导航将按关键词搜索</p>`}
+        ${stop.resolvedName ? `<p style="margin-top:8px;font-size:12px;color:var(--ink-soft)">高德定位：${stop.resolvedName}</p>` : `<p style="margin-top:8px;font-size:12px;color:var(--coral)">该点暂未校准到高德 POI，导航将按关键词搜索</p>`}
       `;
       const nav = document.getElementById("navBtn");
-      // 已校准用坐标导航；未校准用关键词搜索更稳
-      if (stop.resolved) {
-        nav.href = amapNavUrl(stop);
-      } else {
-        const kw = encodeURIComponent(stop.keyword || stop.name);
-        const city = encodeURIComponent(stop.city || "");
-        nav.href = `https://uri.amap.com/search?keyword=${kw}&city=${city}&callnative=1&src=coast-trip`;
-      }
+      nav.href = navHrefFor(stop);
+      nav.textContent = stop.lodging ? "导航回酒店" : "高德导航";
       sheet.classList.add("open");
       const railEl = document.getElementById("rail");
       if (railEl) railEl.classList.add("sheet-open");
       const hint = document.getElementById("hudHint");
       if (hint) hint.style.display = "none";
+      updateStepButtons();
+      updatePeekCopy();
     }
 
     function hideSheet() {
@@ -2108,6 +2460,8 @@
       selectedId = null;
       document.querySelectorAll(".stop").forEach((el) => el.classList.remove("selected"));
       refreshMarkerAppearance();
+      updatePeekCopy();
+      updateStepButtons();
     }
 
     document.getElementById("sheetClose").addEventListener("click", closeSheet);
@@ -2119,14 +2473,20 @@
         setTimeout(() => centerOnLngLat(stop.lng, stop.lat, 15), isMobile() ? 320 : 0);
       }
     });
+    document.getElementById("prevStopBtn").addEventListener("click", () => stepStop(-1));
+    document.getElementById("nextStopBtn").addEventListener("click", () => stepStop(1));
+    document.getElementById("homeFromSheetBtn").addEventListener("click", goHomeHotel);
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") closeSheet();
+      if (e.key === "ArrowLeft") stepStop(-1);
+      if (e.key === "ArrowRight") stepStop(1);
     });
 
     setupMobileDrawer();
     renderDayFilters();
     renderList();
     updatePeekCopy();
+    updateMobileChrome();
 
     (function boot() {
       if (typeof AMap === "undefined") {
